@@ -1,247 +1,268 @@
 local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
-local CoreGui = game:GetService("CoreGui")
-
+local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
-local Mouse = LocalPlayer:GetMouse()
 
 local Config = {
-    Combat = {
-        HitboxEnabled = false,
-        HitboxSize = 25,
-        HitboxPart = "Head",
-        HitboxTransparency = 0.5,
-        HitboxColor = Color3.fromRGB(180, 0, 255),
-        SilentAim = false,
-        AimRadius = 150,
-        AimSmooth = 0.1,
-        Predict = 0.165
-    },
-    Visuals = {
-        Box = false,
-        Skeleton = false,
-        Names = false,
-        Tracer = false,
-        Color = Color3.fromRGB(180, 0, 255)
-    },
-    Movement = {
-        SpeedEnabled = false,
-        WalkSpeed = 16,
-        Fly = false,
-        FlySpeed = 150,
-        ShiftLock = false,
-        InfJump = false,
-        Noclip = false
-    }
+    HitboxSize = 25,
+    HitboxEnabled = false,
+    HitboxPart = "Head",
+    HitboxTransparency = 0.5,
+    SpeedEnabled = false,
+    WalkSpeed = 16,
+    FlyEnabled = false,
+    FlySpeed = 100,
+    EspEnabled = false,
+    ShiftLock = false
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "QuangTruong_Stable_V11"
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-pcall(function()
-    ScreenGui.Parent = CoreGui
-end)
-if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
-
-local function Corner(obj, r)
-    local uic = Instance.new("UICorner")
-    uic.CornerRadius = UDim.new(0, r or 12)
-    uic.Parent = obj
-end
-
-local function Stroke(obj, col)
-    local uis = Instance.new("UIStroke")
-    uis.Color = col or Color3.fromRGB(180, 0, 255)
-    uis.Thickness = 2.5
-    uis.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    uis.Parent = obj
-end
+ScreenGui.Name = "QuangTruong_V12"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999
+ScreenGui.Parent = (game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui"))
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Parent = ScreenGui
-Main.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.Position = UDim2.new(0.5, -250, 0.5, -150)
+Main.Size = UDim2.new(0, 500, 0, 300)
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, -300, 0.5, -200)
-Main.Size = UDim2.new(0, 600, 0, 400)
-Main.Visible = true
-Corner(Main, 15)
-Stroke(Main)
+Main.Active = true
+Main.Draggable = true
 
-local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
-TopBar.Parent = Main
-TopBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-TopBar.Size = UDim2.new(1, 0, 0, 50)
-Corner(TopBar, 15)
+local UICorner_Main = Instance.new("UICorner")
+UICorner_Main.CornerRadius = UDim.new(0, 15)
+UICorner_Main.Parent = Main
+
+local UIStroke_Main = Instance.new("UIStroke")
+UIStroke_Main.Color = Color3.fromRGB(180, 0, 255)
+UIStroke_Main.Thickness = 3
+UIStroke_Main.Parent = Main
 
 local Title = Instance.new("TextLabel")
-Title.Parent = TopBar
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 20, 0, 0)
-Title.Size = UDim2.new(0, 200, 1, 0)
+Title.Name = "Title"
+Title.Parent = Main
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Font = Enum.Font.LuckiestGuy
-Title.Text = "QUANGTRUONG SUPREME V11"
+Title.Text = "QUANGTRUONG SUPREME V12"
 Title.TextColor3 = Color3.fromRGB(180, 0, 255)
-Title.TextSize = 24
-Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextSize = 22
+Title.BorderSizePixel = 0
+
+local UICorner_Title = Instance.new("UICorner")
+UICorner_Title.CornerRadius = UDim.new(0, 15)
+UICorner_Title.Parent = Title
+
+local TabFrame = Instance.new("Frame")
+TabFrame.Name = "TabFrame"
+TabFrame.Parent = Main
+TabFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+TabFrame.Position = UDim2.new(0, 10, 0, 50)
+TabFrame.Size = UDim2.new(0, 120, 1, -60)
+TabFrame.BorderSizePixel = 0
+
+local UICorner_Tab = Instance.new("UICorner")
+UICorner_Tab.CornerRadius = UDim.new(0, 10)
+UICorner_Tab.Parent = TabFrame
 
 local Container = Instance.new("Frame")
 Container.Name = "Container"
 Container.Parent = Main
 Container.BackgroundTransparency = 1
-Container.Position = UDim2.new(0, 160, 0, 60)
-Container.Size = UDim2.new(1, -170, 1, -70)
+Container.Position = UDim2.new(0, 140, 0, 50)
+Container.Size = UDim2.new(1, -150, 1, -60)
 
-local SideBar = Instance.new("Frame")
-SideBar.Parent = Main
-SideBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-SideBar.Position = UDim2.new(0, 10, 0, 60)
-SideBar.Size = UDim2.new(0, 140, 1, -70)
-Corner(SideBar, 10)
+local UIListLayout_Tab = Instance.new("UIListLayout")
+UIListLayout_Tab.Parent = TabFrame
+UIListLayout_Tab.Padding = UDim.new(0, 5)
+UIListLayout_Tab.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-local TabList = Instance.new("UIListLayout")
-TabList.Parent = SideBar
-TabList.Padding = UDim.new(0, 5)
+local function CreateButton(text, parent, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 35)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    btn.Font = Enum.Font.GothamBold
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.TextSize = 12
+    btn.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
 
-local function CreateTab(name)
-    local TabBtn = Instance.new("TextButton")
-    TabBtn.Parent = SideBar
-    TabBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    TabBtn.Size = UDim2.new(1, 0, 0, 40)
-    TabBtn.Font = Enum.Font.GothamBold
-    TabBtn.Text = name
-    TabBtn.TextColor3 = Color3.new(1, 1, 1)
-    TabBtn.TextSize = 14
-    Corner(TabBtn, 8)
-
-    local Page = Instance.new("ScrollingFrame")
-    Page.Parent = Container
-    Page.Size = UDim2.new(1, 0, 1, 0)
-    Page.BackgroundTransparency = 1
-    Page.Visible = false
-    Page.ScrollBarThickness = 0
-
-    local PageList = Instance.new("UIListLayout")
-    PageList.Parent = Page
-    PageList.Padding = UDim.new(0, 10)
-
-    TabBtn.MouseButton1Click:Connect(function()
-        for _, v in pairs(Container:GetChildren()) do if v:IsA("ScrollingFrame") then v.Visible = false end end
-        Page.Visible = true
-    end)
-
-    return Page
+    btn.MouseButton1Click:Connect(callback)
+    return btn
 end
 
-local CombatPage = CreateTab("COMBAT")
-local VisualPage = CreateTab("VISUALS")
-local MovePage = CreateTab("MOVEMENT")
-
-local function AddToggle(parent, text, callback)
-    local f = Instance.new("Frame")
-    f.Parent = parent
-    f.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    f.Size = UDim2.new(1, 0, 0, 45)
-    Corner(f, 8)
-
-    local l = Instance.new("TextLabel")
-    l.Parent = f
-    l.BackgroundTransparency = 1
-    l.Position = UDim2.new(0, 15, 0, 0)
-    l.Size = UDim2.new(1, -60, 1, 0)
-    l.Font = Enum.Font.GothamSemibold
-    l.Text = text
-    l.TextColor3 = Color3.new(1, 1, 1)
-    l.TextSize = 14
-    l.TextXAlignment = Enum.TextXAlignment.Left
-
-    local b = Instance.new("TextButton")
-    b.Parent = f
-    b.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    b.Position = UDim2.new(1, -50, 0.5, -12)
-    b.Size = UDim2.new(0, 40, 0, 24)
-    b.Text = ""
-    Corner(b, 12)
-
+local function CreateToggle(text, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    frame.Parent = Container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -50, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamSemibold
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 40, 0, 20)
+    btn.Position = UDim2.new(1, -45, 0.5, -10)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    btn.Text = ""
+    btn.Parent = frame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = btn
+    
     local state = false
-    b.MouseButton1Click:Connect(function()
+    btn.MouseButton1Click:Connect(function()
         state = not state
-        b.BackgroundColor3 = state and Color3.fromRGB(180, 0, 255) or Color3.fromRGB(40, 40, 50)
+        btn.BackgroundColor3 = state and Color3.fromRGB(180, 0, 255) or Color3.fromRGB(50, 50, 60)
         callback(state)
     end)
 end
 
-AddToggle(CombatPage, "Hitbox God Mode", function(v) Config.Combat.HitboxEnabled = v end)
-AddToggle(CombatPage, "Silent Aim", function(v) Config.Combat.SilentAim = v end)
-AddToggle(VisualPage, "Box ESP", function(v) Config.Visuals.Box = v end)
-AddToggle(VisualPage, "Name Tags", function(v) Config.Visuals.Names = v end)
-AddToggle(MovePage, "Speed Bypass", function(v) Config.Movement.SpeedEnabled = v end)
-AddToggle(MovePage, "Fly Mode", function(v) Config.Movement.Fly = v end)
-AddToggle(MovePage, "Shift Lock", function(v) Config.Movement.ShiftLock = v end)
+local function CreateSlider(text, min, max, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 50)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    frame.Parent = Container
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 25)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamSemibold
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.TextSize = 12
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
+    
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(0.9, 0, 0, 5)
+    sliderBar.Position = UDim2.new(0.05, 0, 0.7, 0)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    sliderBar.Parent = frame
+    
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
+    sliderFill.Parent = sliderBar
+    
+    local inputBtn = Instance.new("TextButton")
+    inputBtn.Size = UDim2.new(1, 0, 1, 0)
+    inputBtn.BackgroundTransparency = 1
+    inputBtn.Text = ""
+    inputBtn.Parent = sliderBar
+    
+    inputBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local moveConnection
+            moveConnection = UserInputService.InputChanged:Connect(function(move)
+                if move.UserInputType == Enum.UserInputType.MouseMovement or move.UserInputType == Enum.UserInputType.Touch then
+                    local scale = math.clamp((move.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+                    sliderFill.Size = UDim2.new(scale, 0, 1, 0)
+                    local value = math.floor(min + (max - min) * scale)
+                    label.Text = text .. ": " .. tostring(value)
+                    callback(value)
+                end
+            end)
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    moveConnection:Disconnect()
+                end
+            end)
+        end
+    end)
+end
+
+local UIListLayout_Cont = Instance.new("UIListLayout")
+UIListLayout_Cont.Parent = Container
+UIListLayout_Cont.Padding = UDim.new(0, 10)
+
+CreateToggle("Enable Hitbox", function(v) Config.HitboxEnabled = v end)
+CreateSlider("Hitbox Size", 1, 500, function(v) Config.HitboxSize = v end)
+CreateToggle("Enable ESP", function(v) Config.EspEnabled = v end)
+CreateToggle("Speed Bypass", function(v) Config.SpeedEnabled = v end)
+CreateSlider("WalkSpeed", 16, 1000, function(v) Config.WalkSpeed = v end)
+CreateToggle("Fly Mode", function(v) Config.FlyEnabled = v end)
+CreateToggle("Shift Lock", function(v) Config.ShiftLock = v end)
 
 RunService.RenderStepped:Connect(function()
-    if Config.Movement.SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = Config.Movement.WalkSpeed
+    if Config.SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = Config.WalkSpeed
     end
-    
-    if Config.Movement.ShiftLock then
+
+    if Config.ShiftLock then
         Camera.Offset = Vector3.new(1.7, 0.5, 0)
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     else
         Camera.Offset = Vector3.new(0, 0, 0)
     end
 
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if Config.Combat.HitboxEnabled and p.Character:FindFirstChild(Config.Combat.HitboxPart) then
-                local part = p.Character[Config.Combat.HitboxPart]
-                part.Size = Vector3.new(Config.Combat.HitboxSize, Config.Combat.HitboxSize, Config.Combat.HitboxSize)
-                part.Transparency = Config.Combat.HitboxTransparency
-                part.CanCollide = false
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            if Config.HitboxEnabled and plr.Character:FindFirstChild(Config.HitboxPart) then
+                local p = plr.Character[Config.Combat.HitboxPart or "Head"]
+                p.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                p.Transparency = Config.HitboxTransparency
+                p.CanCollide = false
             end
             
-            local hl = p.Character:FindFirstChild("QT_Highlight")
-            if Config.Visuals.Box then
+            local hl = plr.Character:FindFirstChild("QT_HL")
+            if Config.EspEnabled then
                 if not hl then
-                    hl = Instance.new("Highlight", p.Character)
-                    hl.Name = "QT_Highlight"
+                    hl = Instance.new("Highlight")
+                    hl.Name = "QT_HL"
+                    hl.Parent = plr.Character
+                    hl.FillColor = Color3.fromRGB(180, 0, 255)
+                    hl.OutlineColor = Color3.new(1, 1, 1)
                 end
-                hl.FillColor = Config.Visuals.Color
             elseif hl then
                 hl:Destroy()
             end
         end
     end
-    
-    if Config.Combat.SilentAim then
-        local t = nil; local d = Config.Combat.AimRadius
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
-                local pos, vis = Camera:WorldToViewportPoint(v.Character.Head.Position)
-                if vis then
-                    local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-                    if mag < d then d = mag; t = v end
-                end
-            end
-        end
-        if t then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, t.Character.Head.Position), Config.Combat.AimSmooth)
-        end
-    end
 end)
 
-local ToggleBtn = Instance.new("TextButton", ScreenGui)
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Parent = ScreenGui
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0, 10, 0.5, 0)
-ToggleBtn.Text = "QT"
+ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 255)
-Corner(ToggleBtn, 25)
-ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+ToggleBtn.Text = "QT"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Font = Enum.Font.LuckiestGuy
+ToggleBtn.TextSize = 20
 
-print("QuangTruong V11 Loaded!")
+local UICorner_TBtn = Instance.new("UICorner")
+UICorner_TBtn.CornerRadius = UDim.new(0, 25)
+UICorner_TBtn.Parent = ToggleBtn
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+print("QUANGTRUONG V12 REBORN LOADED")
