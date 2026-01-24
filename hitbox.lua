@@ -18,12 +18,12 @@ local s = {
 local g = Instance.new("ScreenGui", game:GetService("CoreGui"))
 
 local float = Instance.new("TextButton", g)
-float.Size = UDim2.new(0, 65, 0, 65)
-float.Position = UDim2.new(0.05, 0, 0.2, 0)
+float.Size = UDim2.new(0, 60, 0, 60)
+float.Position = UDim2.new(0.1, 0, 0.2, 0)
 float.Text = "✧"
 float.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 float.TextColor3 = Color3.new(1, 1, 1)
-float.TextSize = 35
+float.TextSize = 30
 Instance.new("UICorner", float).CornerRadius = UDim.new(1, 0)
 local f_stroke = Instance.new("UIStroke", float)
 f_stroke.Thickness = 3
@@ -33,39 +33,36 @@ f.Size = UDim2.new(0, 220, 0, 320)
 f.Position = UDim2.new(0.5, -110, 0.4, 0)
 f.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
 f.Visible = false
-f.ClipsDescendants = true
 f.Active = true
+f.Selectable = true
 Instance.new("UICorner", f).CornerRadius = UDim.new(0, 20)
 local m_stroke = Instance.new("UIStroke", f)
 m_stroke.Thickness = 4
 
-local drag, dInput, dStart, sPos
-f.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-        drag = true
-        dStart = i.Position
-        sPos = f.Position
-        i.Changed:Connect(function()
-            if i.UserInputState == Enum.UserInputState.End then drag = false end
+local dragging, dragInput, dragStart, startPos
+f.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = f.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
         end)
     end
 end)
-f.InputChanged:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
-        dInput = i
+f.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
     end
 end)
-uis.InputChanged:Connect(function(i)
-    if i == dInput and drag then
-        local delta = i.Position - dStart
-        f.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
+uis.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        f.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
-
-local scanline = Instance.new("Frame", f)
-scanline.Size = UDim2.new(1, 0, 0, 2)
-scanline.BackgroundTransparency = 0.8
-scanline.BorderSizePixel = 0
 
 float.MouseButton1Click:Connect(function()
     f.Visible = not f.Visible
@@ -73,7 +70,7 @@ end)
 
 local t = Instance.new("TextLabel", f)
 t.Size = UDim2.new(1, 0, 0, 50)
-t.Text = "NIGHTMARE V7"
+t.Text = "NIGHTMARE V8"
 t.TextColor3 = Color3.new(1, 1, 1)
 t.BackgroundTransparency = 1
 t.Font = Enum.Font.LuckiestGuy
@@ -94,68 +91,66 @@ local function btn(txt, pos, callback)
         st = not st
         callback(st)
         ts:Create(b, TweenInfo.new(0.3), {
-            BackgroundColor3 = st and Color3.fromRGB(40, 40, 40) or Color3.fromRGB(20, 20, 20),
+            BackgroundColor3 = st and Color3.fromRGB(45, 45, 45) or Color3.fromRGB(20, 20, 20),
             TextColor3 = st and Color3.new(1, 1, 1) or Color3.new(0.5, 0.5, 0.5)
         }):Play()
     end)
 end
 
-local function getClose()
-    local target = nil
-    local dist = 300
-    for _, plr in pairs(p:GetPlayers()) do
-        if plr ~= lp and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, vis = c:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
-            if vis then
-                local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(c.ViewportSize.X/2, c.ViewportSize.Y/2)).Magnitude
-                if mag < dist then
-                    target = plr.Character.HumanoidRootPart
-                    dist = mag
-                end
-            end
-        end
-    end
-    return target
-end
-
 btn("HITBOX EXPAND", UDim2.new(0.075, 0, 0.18, 0), function(v) s.hit = v end)
 btn("LOCK ON TARGET", UDim2.new(0.075, 0, 0.35, 0), function(v) 
     s.aim = v 
-    if v then s.target = getClose() else s.target = nil end
+    if v then
+        local target = nil
+        local dist = 300
+        for _, plr in pairs(p:GetPlayers()) do
+            if plr ~= lp and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                local pos, vis = c:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                if vis then
+                    local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(c.ViewportSize.X/2, c.ViewportSize.Y/2)).Magnitude
+                    if mag < dist then
+                        target = plr.Character.HumanoidRootPart
+                        dist = mag
+                    end
+                end
+            end
+        end
+        s.target = target
+    else s.target = nil end
 end)
 btn("NEON ESP", UDim2.new(0.075, 0, 0.52, 0), function(v) s.esp = v end)
 
 local hf = Instance.new("Frame", f)
-hf.Size = UDim2.new(0.85, 0, 0, 50)
-hf.Position = UDim2.new(0.075, 0, 0.72, 0)
+hf.Size = UDim2.new(0.85, 0, 0, 60)
+hf.Position = UDim2.new(0.075, 0, 0.7, 0)
 hf.BackgroundTransparency = 1
 
 local sz_l = Instance.new("TextLabel", hf)
-sz_l.Size = UDim2.new(1, 0, 0, 20)
+sz_l.Size = UDim2.new(1, 0, 0, 25)
 sz_l.Text = "HITBOX SIZE: 15"
 sz_l.TextColor3 = Color3.new(1, 1, 1)
 sz_l.BackgroundTransparency = 1
 sz_l.Font = Enum.Font.GothamBold
-sz_l.TextSize = 12
+sz_l.TextSize = 14
 
 local m_btn = Instance.new("TextButton", hf)
 m_btn.Text = "-"
-m_btn.Size = UDim2.new(0.3, 0, 0, 30)
+m_btn.Size = UDim2.new(0.35, 0, 0, 35)
 m_btn.Position = UDim2.new(0, 0, 0.45, 0)
-m_btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+m_btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 m_btn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", m_btn)
 
 local p_btn = Instance.new("TextButton", hf)
 p_btn.Text = "+"
-p_btn.Size = UDim2.new(0.3, 0, 0, 30)
-p_btn.Position = UDim2.new(0.7, 0, 0.45, 0)
-p_btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+p_btn.Size = UDim2.new(0.35, 0, 0, 35)
+p_btn.Position = UDim2.new(0.65, 0, 0.45, 0)
+p_btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 p_btn.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", p_btn)
 
-m_btn.MouseButton1Click:Connect(function() s.sz = math.max(1, s.sz - 1) end)
-p_btn.MouseButton1Click:Connect(function() s.sz = s.sz + 1 end)
+m_btn.MouseButton1Click:Connect(function() s.sz = math.max(1, s.sz - 2) end)
+p_btn.MouseButton1Click:Connect(function() s.sz = math.min(100, s.sz + 2) end)
 
 rs.RenderStepped:Connect(function()
     local clr = Color3.fromHSV(tick()/s.spd%1, 1, 1)
@@ -163,11 +158,11 @@ rs.RenderStepped:Connect(function()
     m_stroke.Color = clr
     t.TextColor3 = clr
     sz_l.Text = "HITBOX SIZE: " .. s.sz
-    scanline.BackgroundColor3 = clr
-    scanline.Position = UDim2.new(0, 0, 0, (tick()*120)%f.Size.Y.Offset / f.Size.Y.Offset)
+    sz_l.TextColor3 = clr
     
     local pulse = 1 + math.sin(tick()*5)*0.05
     float.Size = UDim2.new(0, 60*pulse, 0, 60*pulse)
+    float.BorderColor3 = clr
 
     for _, plr in pairs(p:GetPlayers()) do
         pcall(function()
