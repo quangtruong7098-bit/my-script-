@@ -7,8 +7,8 @@ local c = workspace.CurrentCamera
 
 local s = {
     sz = 15,
-    spd = 1.2,
     hit = false,
+    part = "Head",
     aim = false,
     esp = false,
     fly = false,
@@ -20,7 +20,6 @@ local s = {
 }
 
 local g = Instance.new("ScreenGui", game:GetService("CoreGui"))
-
 local float = Instance.new("TextButton", g)
 float.Size = UDim2.new(0, 60, 0, 60)
 float.Position = UDim2.new(0.1, 0, 0.15, 0)
@@ -34,8 +33,8 @@ local f_s = Instance.new("UIStroke", float)
 f_s.Thickness = 3
 
 local f = Instance.new("Frame", g)
-f.Size = UDim2.new(0, 220, 0, 350)
-f.Position = UDim2.new(0.5, -110, 0.4, 0)
+f.Size = UDim2.new(0, 230, 0, 380)
+f.Position = UDim2.new(0.5, -115, 0.4, 0)
 f.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 f.Visible = false
 f.Active = true
@@ -44,23 +43,21 @@ Instance.new("UICorner", f).CornerRadius = UDim.new(0, 15)
 local m_s = Instance.new("UIStroke", f)
 m_s.Thickness = 3
 
-float.MouseButton1Click:Connect(function()
-    f.Visible = not f.Visible
-end)
+float.MouseButton1Click:Connect(function() f.Visible = not f.Visible end)
 
 local t = Instance.new("TextLabel", f)
 t.Size = UDim2.new(1, 0, 0, 45)
-t.Text = "quangtruonghaik13"
+t.Text = "quangtruonghaik13 V14"
 t.TextColor3 = Color3.new(1, 1, 1)
 t.BackgroundTransparency = 1
 t.Font = "LuckiestGuy"
-t.TextSize = 18
+t.TextSize = 17
 
 local sc = Instance.new("ScrollingFrame", f)
 sc.Size = UDim2.new(1, 0, 0.85, 0)
-sc.Position = UDim2.new(0, 0, 0.15, 0)
+sc.Position = UDim2.new(0, 0, 0.12, 0)
 sc.BackgroundTransparency = 1
-sc.CanvasSize = UDim2.new(0, 0, 1.8, 0)
+sc.CanvasSize = UDim2.new(0, 0, 2, 0)
 sc.ScrollBarThickness = 2
 
 local lyt = Instance.new("UIListLayout", sc)
@@ -70,7 +67,7 @@ lyt.Padding = UDim.new(0, 8)
 local function makeBtn(txt, callback)
     local b = Instance.new("TextButton", sc)
     b.Text = txt .. ": OFF"
-    b.Size = UDim2.new(0.85, 0, 0, 35)
+    b.Size = UDim2.new(0.9, 0, 0, 35)
     b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     b.TextColor3 = Color3.new(0.8, 0.8, 0.8)
     b.Font = "GothamBold"
@@ -85,43 +82,44 @@ local function makeBtn(txt, callback)
     end)
 end
 
-makeBtn("Hitbox Head", function(v) s.hit = v end)
-makeBtn("Lock Target", function(v) 
-    s.aim = v 
-    if v then
-        local tar, d = nil, 500
-        for _, pl in pairs(p:GetPlayers()) do
-            if pl ~= lp and pl.Character and pl.Character:FindFirstChild("Head") then
-                local pos, vis = c:WorldToViewportPoint(pl.Character.Head.Position)
-                if vis then
-                    local m = (Vector2.new(pos.X, pos.Y) - Vector2.new(c.ViewportSize.X/2, c.ViewportSize.Y/2)).Magnitude
-                    if m < d then tar = pl.Character.Head d = m end
-                end
-            end
-        end
-        s.target = tar
-    else s.target = nil end
+local pb_btn = Instance.new("TextButton", sc)
+pb_btn.Size = UDim2.new(0.9, 0, 0, 35)
+pb_btn.Text = "PART: HEAD"
+pb_btn.BackgroundColor3 = Color3.fromRGB(0, 80, 150)
+pb_btn.TextColor3 = Color3.new(1, 1, 1)
+pb_btn.Font = "GothamBold"
+Instance.new("UICorner", pb_btn)
+
+local parts = {"Head", "HumanoidRootPart", "LeftLeg", "RightLeg"}
+local curr_p = 1
+pb_btn.MouseButton1Click:Connect(function()
+    curr_p = curr_p + 1
+    if curr_p > #parts then curr_p = 1 end
+    s.part = parts[curr_p]
+    pb_btn.Text = "PART: " .. s.part:upper()
 end)
+
+makeBtn("Hitbox Active", function(v) s.hit = v end)
+makeBtn("Lock Target", function(v) s.aim = v end)
 makeBtn("Neon ESP", function(v) s.esp = v end)
 makeBtn("Fly Mode", function(v) s.fly = v end)
-makeBtn("Speed Hack", function(v) s.speed = v and 100 or 16 end)
-makeBtn("High Jump", function(v) s.jump = v and 150 or 50 end)
-makeBtn("Infinite Jump", function(v) s.infj = v end)
+makeBtn("Speed 100", function(v) s.speed = v and 100 or 16 end)
+makeBtn("Inf Jump", function(v) s.infj = v end)
 
 local hf = Instance.new("Frame", sc)
-hf.Size = UDim2.new(0.85, 0, 0, 75)
+hf.Size = UDim2.new(0.85, 0, 0, 70)
 hf.BackgroundTransparency = 1
 local szl = Instance.new("TextLabel", hf)
 szl.Size = UDim2.new(1, 0, 0, 25)
-szl.Text = "HEAD SIZE: 15"
+szl.Text = "SIZE: 15"
 szl.TextColor3 = Color3.new(1, 1, 1)
 szl.BackgroundTransparency = 1
 szl.Font = "GothamBold"
 local mb = Instance.new("TextButton", hf)
-mb.Text = "-"; mb.Size = UDim2.new(0.4, 0, 0, 35); mb.Position = UDim2.new(0, 0, 0.4, 0); mb.BackgroundColor3 = Color3.fromRGB(50, 20, 20); mb.TextColor3 = Color3.new(1, 1, 1)
+mb.Text = "-"; mb.Size = UDim2.new(0.4, 0, 0, 30); mb.Position = UDim2.new(0, 0, 0.4, 0); mb.BackgroundColor3 = Color3.fromRGB(80, 20, 20); mb.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", mb)
 local pb = Instance.new("TextButton", hf)
-pb.Text = "+"; pb.Size = UDim2.new(0.4, 0, 0, 35); pb.Position = UDim2.new(0.6, 0, 0.4, 0); pb.BackgroundColor3 = Color3.fromRGB(20, 50, 20); pb.TextColor3 = Color3.new(1, 1, 1)
+pb.Text = "+"; pb.Size = UDim2.new(0.4, 0, 0, 30); pb.Position = UDim2.new(0.6, 0, 0.4, 0); pb.BackgroundColor3 = Color3.fromRGB(20, 80, 20); pb.TextColor3 = Color3.new(1, 1, 1)
 Instance.new("UICorner", pb)
 mb.MouseButton1Click:Connect(function() s.sz = math.max(1, s.sz - 5) end)
 pb.MouseButton1Click:Connect(function() s.sz = math.min(100, s.sz + 5) end)
@@ -133,42 +131,43 @@ uis.JumpRequest:Connect(function()
 end)
 
 rs.RenderStepped:Connect(function()
-    local clr = Color3.fromHSV(tick()/s.spd%1, 1, 1)
-    f_s.Color = clr; m_s.Color = clr; t.TextColor3 = clr; szl.TextColor3 = clr
-    szl.Text = "HEAD SIZE: " .. s.sz
-
+    local clr = Color3.fromHSV(tick()/1.2%1, 1, 1)
+    f_s.Color = clr; m_s.Color = clr; t.TextColor3 = clr; szl.Text = "SIZE: " .. s.sz
+    
     if lp.Character and lp.Character:FindFirstChild("Humanoid") then
         lp.Character.Humanoid.WalkSpeed = s.speed
-        lp.Character.Humanoid.JumpPower = s.jump
         local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-        if hrp and s.fly then
-            if not hrp:FindFirstChild("FlyBV") then
-                local bv = Instance.new("BodyVelocity", hrp); bv.Name = "FlyBV"; bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                local bg = Instance.new("BodyGyro", hrp); bg.Name = "FlyBG"; bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+        if hrp then
+            if s.fly then
+                if not hrp:FindFirstChild("FlyBV") then
+                    local bv = Instance.new("BodyVelocity", hrp); bv.Name = "FlyBV"; bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+                    local bg = Instance.new("BodyGyro", hrp); bg.Name = "FlyBG"; bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+                end
+                hrp.FlyBG.CFrame = c.CFrame
+                local move = lp.Character.Humanoid.MoveDirection
+                hrp.FlyBV.Velocity = (c.CFrame.LookVector * move.Magnitude * s.f_spd)
+                if move.Magnitude == 0 then hrp.FlyBV.Velocity = Vector3.new(0, 0.1, 0) end
+            else
+                if hrp:FindFirstChild("FlyBV") then hrp.FlyBV:Destroy() end
+                if hrp:FindFirstChild("FlyBG") then hrp.FlyBG:Destroy() end
             end
-            hrp.FlyBG.CFrame = c.CFrame
-            local dir = lp.Character.Humanoid.MoveDirection
-            hrp.FlyBV.Velocity = (c.CFrame.LookVector * (dir.Z < 0 and s.f_spd or dir.Z > 0 and -s.f_spd or 0)) + (c.CFrame.RightVector * (dir.X > 0 and s.f_spd or dir.X < 0 and -s.f_spd or 0))
-            if dir.Magnitude == 0 then hrp.FlyBV.Velocity = Vector3.new(0, 0.1, 0) end
-        elseif hrp then
-            if hrp:FindFirstChild("FlyBV") then hrp.FlyBV:Destroy() end
-            if hrp:FindFirstChild("FlyBG") then hrp.FlyBG:Destroy() end
         end
     end
 
     for _, plr in pairs(p:GetPlayers()) do
-        if plr ~= lp and plr.Character and plr.Character:FindFirstChild("Head") then
-            local hd = plr.Character.Head
-            if s.hit then
-                hd.Size = Vector3.new(s.sz, s.sz, s.sz)
-                hd.Color = Color3.fromRGB(0, 170, 255)
-                hd.Transparency = 0.8
-                hd.CanCollide = false
-                hd.Massless = true
-            else
-                hd.Size = Vector3.new(1.2, 1.2, 1.2)
-                hd.Transparency = 0
-                hd.CanCollide = true
+        if plr ~= lp and plr.Character then
+            local targetPart = plr.Character:FindFirstChild(s.part)
+            if targetPart then
+                if s.hit then
+                    targetPart.Size = Vector3.new(s.sz, s.sz, s.sz)
+                    targetPart.Color = Color3.fromRGB(0, 100, 255)
+                    targetPart.Transparency = 0.8
+                    targetPart.CanCollide = false
+                else
+                    targetPart.Size = (s.part == "Head" and Vector3.new(1.2, 1.2, 1.2) or Vector3.new(2, 2, 1))
+                    targetPart.Transparency = 0
+                    targetPart.CanCollide = true
+                end
             end
             local hi = plr.Character:FindFirstChild("Highlight")
             if s.esp then
@@ -177,5 +176,8 @@ rs.RenderStepped:Connect(function()
             elseif hi then hi:Destroy() end
         end
     end
-    if s.aim and s.target and s.target.Parent then c.CFrame = CFrame.new(c.CFrame.Position, s.target.Position) end
+    
+    if s.aim and s.target and s.target.Parent then 
+        c.CFrame = CFrame.new(c.CFrame.Position, s.target.Position) 
+    end
 end)
