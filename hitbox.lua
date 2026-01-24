@@ -164,14 +164,12 @@ rs.RenderStepped:Connect(function()
             local hrp = plr.Character.HumanoidRootPart
             if s.hit then
                 hrp.Size = Vector3.new(s.sz, s.sz, s.sz)
-                hrp.Color = clr
                 hrp.Transparency = 0.7
-                hrp.Material = "Neon"
                 hrp.CanCollide = false
-                hrp.Massless = true
             else
                 hrp.Size = Vector3.new(2, 2, 1)
                 hrp.Transparency = 1
+                hrp.CanCollide = true
             end
             local hi = plr.Character:FindFirstChild("Highlight")
             if s.esp then
