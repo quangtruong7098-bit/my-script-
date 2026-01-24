@@ -1,183 +1,451 @@
-local p = game:GetService("Players")
-local rs = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
-local ts = game:GetService("TweenService")
-local lp = p.LocalPlayer
-local c = workspace.CurrentCamera
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
-local s = {
-    sz = 15,
-    hit = false,
-    part = "Head",
-    aim = false,
-    esp = false,
-    fly = false,
-    f_spd = 200,
-    speed = 16,
-    jump = 50,
-    infj = false,
-    target = nil
+local Settings = {
+    Combat = {
+        Hitbox = false,
+        HitboxSize = 15,
+        HitboxPart = "Head",
+        HitboxTransparency = 0.7,
+        HitboxColor = Color3.fromRGB(0, 100, 255),
+        Aimbot = false,
+        AimPart = "Head",
+        AimSmooth = false,
+        AimRadius = 200
+    },
+    Visuals = {
+        ESP_Box = false,
+        ESP_Name = false,
+        ESP_Line = false,
+        ESP_Color = Color3.fromRGB(255, 0, 0),
+        FullBright = false,
+        Crosshair = false
+    },
+    Movement = {
+        Fly = false,
+        FlySpeed = 200,
+        WalkSpeed = 16,
+        JumpPower = 50,
+        InfiniteJump = false,
+        Noclip = false,
+        SpeedEnabled = false,
+        JumpEnabled = false
+    },
+    Misc = {
+        AntiAFK = true,
+        FPSBoost = false
+    }
 }
 
-local g = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local float = Instance.new("TextButton", g)
-float.Size = UDim2.new(0, 60, 0, 60)
-float.Position = UDim2.new(0.1, 0, 0.15, 0)
-float.Text = "QT"
-float.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-float.TextColor3 = Color3.new(1, 1, 1)
-float.TextSize = 24
-float.ZIndex = 10
-Instance.new("UICorner", float).CornerRadius = UDim.new(1, 0)
-local f_s = Instance.new("UIStroke", float)
-f_s.Thickness = 3
+local QT_Lib = {}
 
-local f = Instance.new("Frame", g)
-f.Size = UDim2.new(0, 230, 0, 380)
-f.Position = UDim2.new(0.5, -115, 0.4, 0)
-f.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-f.Visible = false
-f.Active = true
-f.Draggable = true
-Instance.new("UICorner", f).CornerRadius = UDim.new(0, 15)
-local m_s = Instance.new("UIStroke", f)
-m_s.Thickness = 3
+function QT_Lib:CreateWindow(name)
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "QTHub_Titan"
+    ScreenGui.Parent = game:GetService("CoreGui")
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 500, 0, 350)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -175)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = MainFrame
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.fromRGB(60, 60, 60)
+    Stroke.Thickness = 2
+    Stroke.Parent = MainFrame
 
-float.MouseButton1Click:Connect(function() f.Visible = not f.Visible end)
+    local TopBar = Instance.new("Frame")
+    TopBar.Name = "TopBar"
+    TopBar.Size = UDim2.new(1, 0, 0, 40)
+    TopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TopBar.BorderSizePixel = 0
+    TopBar.Parent = MainFrame
+    
+    local TopCorner = Instance.new("UICorner")
+    TopCorner.CornerRadius = UDim.new(0, 10)
+    TopCorner.Parent = TopBar
+    
+    local Title = Instance.new("TextLabel")
+    Title.Text = name
+    Title.Size = UDim2.new(1, -20, 1, 0)
+    Title.Position = UDim2.new(0, 20, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 18
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.Parent = TopBar
 
-local t = Instance.new("TextLabel", f)
-t.Size = UDim2.new(1, 0, 0, 45)
-t.Text = "quangtruonghaik13 V14"
-t.TextColor3 = Color3.new(1, 1, 1)
-t.BackgroundTransparency = 1
-t.Font = "LuckiestGuy"
-t.TextSize = 17
+    local TabContainer = Instance.new("ScrollingFrame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(0, 120, 1, -50)
+    TabContainer.Position = UDim2.new(0, 10, 0, 45)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.BorderSizePixel = 0
+    TabContainer.ScrollBarThickness = 0
+    TabContainer.Parent = MainFrame
+    
+    local TabList = Instance.new("UIListLayout")
+    TabList.SortOrder = Enum.SortOrder.LayoutOrder
+    TabList.Padding = UDim.new(0, 5)
+    TabList.Parent = TabContainer
 
-local sc = Instance.new("ScrollingFrame", f)
-sc.Size = UDim2.new(1, 0, 0.85, 0)
-sc.Position = UDim2.new(0, 0, 0.12, 0)
-sc.BackgroundTransparency = 1
-sc.CanvasSize = UDim2.new(0, 0, 2, 0)
-sc.ScrollBarThickness = 2
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "ContentContainer"
+    ContentContainer.Size = UDim2.new(1, -140, 1, -50)
+    ContentContainer.Position = UDim2.new(0, 135, 0, 45)
+    ContentContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Parent = MainFrame
 
-local lyt = Instance.new("UIListLayout", sc)
-lyt.HorizontalAlignment = "Center"
-lyt.Padding = UDim.new(0, 8)
-
-local function makeBtn(txt, callback)
-    local b = Instance.new("TextButton", sc)
-    b.Text = txt .. ": OFF"
-    b.Size = UDim2.new(0.9, 0, 0, 35)
-    b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    b.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-    b.Font = "GothamBold"
-    b.TextSize = 11
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
-    local state = false
-    b.MouseButton1Click:Connect(function()
-        state = not state
-        b.Text = txt .. (state and ": ON" or ": OFF")
-        callback(state)
-        b.BackgroundColor3 = state and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(30, 30, 30)
+    local MobileButton = Instance.new("TextButton")
+    MobileButton.Size = UDim2.new(0, 50, 0, 50)
+    MobileButton.Position = UDim2.new(0.05, 0, 0.2, 0)
+    MobileButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    MobileButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MobileButton.Text = "QT"
+    MobileButton.Font = Enum.Font.LuckiestGuy
+    MobileButton.TextSize = 20
+    MobileButton.Parent = ScreenGui
+    Instance.new("UICorner", MobileButton).CornerRadius = UDim.new(1, 0)
+    Instance.new("UIStroke", MobileButton).Thickness = 2
+    
+    MobileButton.MouseButton1Click:Connect(function()
+        MainFrame.Visible = not MainFrame.Visible
     end)
+
+    local Window = {}
+
+    function Window:CreateTab(tabName)
+        local TabButton = Instance.new("TextButton")
+        TabButton.Name = tabName
+        TabButton.Size = UDim2.new(1, 0, 0, 35)
+        TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        TabButton.Text = tabName
+        TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+        TabButton.Font = Enum.Font.GothamBold
+        TabButton.TextSize = 14
+        TabButton.Parent = TabContainer
+        
+        local TabCorner = Instance.new("UICorner")
+        TabCorner.CornerRadius = UDim.new(0, 6)
+        TabCorner.Parent = TabButton
+
+        local TabFrame = Instance.new("ScrollingFrame")
+        TabFrame.Name = tabName .. "_Frame"
+        TabFrame.Size = UDim2.new(1, 0, 1, 0)
+        TabFrame.BackgroundTransparency = 1
+        TabFrame.ScrollBarThickness = 2
+        TabFrame.Visible = false
+        TabFrame.Parent = ContentContainer
+
+        local ContentList = Instance.new("UIListLayout")
+        ContentList.SortOrder = Enum.SortOrder.LayoutOrder
+        ContentList.Padding = UDim.new(0, 5)
+        ContentList.Parent = TabFrame
+
+        TabButton.MouseButton1Click:Connect(function()
+            for _, v in pairs(ContentContainer:GetChildren()) do
+                if v:IsA("ScrollingFrame") then v.Visible = false end
+            end
+            for _, v in pairs(TabContainer:GetChildren()) do
+                if v:IsA("TextButton") then 
+                    TweenService:Create(v, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 35, 35), TextColor3 = Color3.fromRGB(200, 200, 200)}):Play()
+                end
+            end
+            TabFrame.Visible = true
+            TweenService:Create(TabButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 100, 255), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+        end)
+
+        local Tab = {}
+
+        function Tab:CreateToggle(text, default, callback)
+            local ToggleFrame = Instance.new("Frame")
+            ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            ToggleFrame.Parent = TabFrame
+            Instance.new("UICorner", ToggleFrame).CornerRadius = UDim.new(0, 6)
+
+            local ToggleBtn = Instance.new("TextButton")
+            ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+            ToggleBtn.BackgroundTransparency = 1
+            ToggleBtn.Text = "  " .. text
+            ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ToggleBtn.TextXAlignment = Enum.TextXAlignment.Left
+            ToggleBtn.Font = Enum.Font.GothamSemibold
+            ToggleBtn.TextSize = 14
+            ToggleBtn.Parent = ToggleFrame
+
+            local Status = Instance.new("Frame")
+            Status.Size = UDim2.new(0, 20, 0, 20)
+            Status.Position = UDim2.new(1, -30, 0.5, -10)
+            Status.BackgroundColor3 = default and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            Status.Parent = ToggleFrame
+            Instance.new("UICorner", Status).CornerRadius = UDim.new(1, 0)
+
+            local enabled = default
+            ToggleBtn.MouseButton1Click:Connect(function()
+                enabled = not enabled
+                Status.BackgroundColor3 = enabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+                callback(enabled)
+            end)
+        end
+
+        function Tab:CreateSlider(text, min, max, default, callback)
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Size = UDim2.new(1, 0, 0, 60)
+            SliderFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            SliderFrame.Parent = TabFrame
+            Instance.new("UICorner", SliderFrame).CornerRadius = UDim.new(0, 6)
+
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -20, 0, 20)
+            Label.Position = UDim2.new(0, 10, 0, 5)
+            Label.BackgroundTransparency = 1
+            Label.Text = text .. ": " .. default
+            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Label.Font = Enum.Font.GothamSemibold
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = SliderFrame
+
+            local Bar = Instance.new("Frame")
+            Bar.Size = UDim2.new(1, -20, 0, 10)
+            Bar.Position = UDim2.new(0, 10, 0, 35)
+            Bar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+            Bar.Parent = SliderFrame
+            Instance.new("UICorner", Bar).CornerRadius = UDim.new(1, 0)
+
+            local Fill = Instance.new("Frame")
+            Fill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
+            Fill.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+            Fill.Parent = Bar
+            Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+
+            local Trigger = Instance.new("TextButton")
+            Trigger.Size = UDim2.new(1, 0, 1, 0)
+            Trigger.BackgroundTransparency = 1
+            Trigger.Text = ""
+            Trigger.Parent = Bar
+
+            local dragging = false
+            Trigger.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
+                end
+            end)
+
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local SizeScale = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                    local Value = math.floor(min + ((max - min) * SizeScale))
+                    Fill.Size = UDim2.new(SizeScale, 0, 1, 0)
+                    Label.Text = text .. ": " .. Value
+                    callback(Value)
+                end
+            end)
+        end
+        
+        function Tab:CreateDropdown(text, list, callback)
+            local DropFrame = Instance.new("Frame")
+            DropFrame.Size = UDim2.new(1, 0, 0, 40)
+            DropFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            DropFrame.Parent = TabFrame
+            Instance.new("UICorner", DropFrame).CornerRadius = UDim.new(0, 6)
+            
+            local MainBtn = Instance.new("TextButton")
+            MainBtn.Size = UDim2.new(1, 0, 1, 0)
+            MainBtn.BackgroundTransparency = 1
+            MainBtn.Text = "  " .. text .. ": " .. list[1]
+            MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            MainBtn.Font = Enum.Font.GothamSemibold
+            MainBtn.TextXAlignment = Enum.TextXAlignment.Left
+            MainBtn.TextSize = 14
+            MainBtn.Parent = DropFrame
+            
+            local current = 1
+            MainBtn.MouseButton1Click:Connect(function()
+                current = current + 1
+                if current > #list then current = 1 end
+                MainBtn.Text = "  " .. text .. ": " .. list[current]
+                callback(list[current])
+            end)
+        end
+
+        return Tab
+    end
+    return Window
 end
 
-local pb_btn = Instance.new("TextButton", sc)
-pb_btn.Size = UDim2.new(0.9, 0, 0, 35)
-pb_btn.Text = "PART: HEAD"
-pb_btn.BackgroundColor3 = Color3.fromRGB(0, 80, 150)
-pb_btn.TextColor3 = Color3.new(1, 1, 1)
-pb_btn.Font = "GothamBold"
-Instance.new("UICorner", pb_btn)
+local Win = QT_Lib:CreateWindow("QUANGTRUONG TITAN V.MAX")
 
-local parts = {"Head", "HumanoidRootPart", "LeftLeg", "RightLeg"}
-local curr_p = 1
-pb_btn.MouseButton1Click:Connect(function()
-    curr_p = curr_p + 1
-    if curr_p > #parts then curr_p = 1 end
-    s.part = parts[curr_p]
-    pb_btn.Text = "PART: " .. s.part:upper()
-end)
+local CombatTab = Win:CreateTab("COMBAT")
+CombatTab:CreateToggle("Enable Hitbox", false, function(v) Settings.Combat.Hitbox = v end)
+CombatTab:CreateDropdown("Hitbox Part", {"Head", "Torso", "HumanoidRootPart", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}, function(v) Settings.Combat.HitboxPart = v end)
+CombatTab:CreateSlider("Hitbox Size", 1, 200, 15, function(v) Settings.Combat.HitboxSize = v end)
+CombatTab:CreateSlider("Transparency", 0, 10, 7, function(v) Settings.Combat.HitboxTransparency = v/10 end)
+CombatTab:CreateToggle("Aimbot (Simple)", false, function(v) Settings.Combat.Aimbot = v end)
 
-makeBtn("Hitbox Active", function(v) s.hit = v end)
-makeBtn("Lock Target", function(v) s.aim = v end)
-makeBtn("Neon ESP", function(v) s.esp = v end)
-makeBtn("Fly Mode", function(v) s.fly = v end)
-makeBtn("Speed 100", function(v) s.speed = v and 100 or 16 end)
-makeBtn("Inf Jump", function(v) s.infj = v end)
+local VisualTab = Win:CreateTab("VISUALS")
+VisualTab:CreateToggle("ESP Box", false, function(v) Settings.Visuals.ESP_Box = v end)
+VisualTab:CreateToggle("ESP Name", false, function(v) Settings.Visuals.ESP_Name = v end)
+VisualTab:CreateToggle("ESP Lines (Tracers)", false, function(v) Settings.Visuals.ESP_Line = v end)
+VisualTab:CreateToggle("Fullbright (Night Vision)", false, function(v) Settings.Visuals.FullBright = v end)
+VisualTab:CreateToggle("Crosshair", false, function(v) Settings.Visuals.Crosshair = v end)
 
-local hf = Instance.new("Frame", sc)
-hf.Size = UDim2.new(0.85, 0, 0, 70)
-hf.BackgroundTransparency = 1
-local szl = Instance.new("TextLabel", hf)
-szl.Size = UDim2.new(1, 0, 0, 25)
-szl.Text = "SIZE: 15"
-szl.TextColor3 = Color3.new(1, 1, 1)
-szl.BackgroundTransparency = 1
-szl.Font = "GothamBold"
-local mb = Instance.new("TextButton", hf)
-mb.Text = "-"; mb.Size = UDim2.new(0.4, 0, 0, 30); mb.Position = UDim2.new(0, 0, 0.4, 0); mb.BackgroundColor3 = Color3.fromRGB(80, 20, 20); mb.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", mb)
-local pb = Instance.new("TextButton", hf)
-pb.Text = "+"; pb.Size = UDim2.new(0.4, 0, 0, 30); pb.Position = UDim2.new(0.6, 0, 0.4, 0); pb.BackgroundColor3 = Color3.fromRGB(20, 80, 20); pb.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", pb)
-mb.MouseButton1Click:Connect(function() s.sz = math.max(1, s.sz - 5) end)
-pb.MouseButton1Click:Connect(function() s.sz = math.min(100, s.sz + 5) end)
+local MoveTab = Win:CreateTab("MOVEMENT")
+MoveTab:CreateToggle("Enable Fly Mode", false, function(v) Settings.Movement.Fly = v end)
+MoveTab:CreateSlider("Fly Speed", 10, 500, 200, function(v) Settings.Movement.FlySpeed = v end)
+MoveTab:CreateToggle("Enable WalkSpeed", false, function(v) Settings.Movement.SpeedEnabled = v end)
+MoveTab:CreateSlider("WalkSpeed Value", 16, 300, 16, function(v) Settings.Movement.WalkSpeed = v end)
+MoveTab:CreateToggle("Enable JumpPower", false, function(v) Settings.Movement.JumpEnabled = v end)
+MoveTab:CreateSlider("JumpPower Value", 50, 500, 50, function(v) Settings.Movement.JumpPower = v end)
+MoveTab:CreateToggle("Infinite Jump", false, function(v) Settings.Movement.InfiniteJump = v end)
+MoveTab:CreateToggle("Noclip (Wall Hack)", false, function(v) Settings.Movement.Noclip = v end)
 
-uis.JumpRequest:Connect(function()
-    if s.infj and lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-        lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+local PlayerTab = Win:CreateTab("PLAYER")
+PlayerTab:CreateToggle("Anti AFK", true, function(v) Settings.Misc.AntiAFK = v end)
+PlayerTab:CreateToggle("FPS Boost", false, function(v) Settings.Misc.FPSBoost = v end)
+
+UserInputService.JumpRequest:Connect(function()
+    if Settings.Movement.InfiniteJump and LocalPlayer.Character then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
-rs.RenderStepped:Connect(function()
-    local clr = Color3.fromHSV(tick()/1.2%1, 1, 1)
-    f_s.Color = clr; m_s.Color = clr; t.TextColor3 = clr; szl.Text = "SIZE: " .. s.sz
+local function GetTargetPart(Char)
+    if not Char then return nil end
+    if Settings.Combat.HitboxPart == "Torso" then
+        return Char:FindFirstChild("HumanoidRootPart") or Char:FindFirstChild("Torso") or Char:FindFirstChild("UpperTorso")
+    elseif Settings.Combat.HitboxPart == "Head" then
+        return Char:FindFirstChild("Head")
+    else
+        for _, v in pairs(Char:GetChildren()) do
+            if string.find(v.Name, Settings.Combat.HitboxPart) then return v end
+            if string.find(v.Name, "Arm") and string.find(Settings.Combat.HitboxPart, "Arm") then return v end
+            if string.find(v.Name, "Leg") and string.find(Settings.Combat.HitboxPart, "Leg") then return v end
+            if string.find(v.Name, "Hand") and string.find(Settings.Combat.HitboxPart, "Arm") then return v end
+            if string.find(v.Name, "Foot") and string.find(Settings.Combat.HitboxPart, "Leg") then return v end
+        end
+    end
+    return nil
+end
+
+RunService.RenderStepped:Connect(function()
+    local CurrentTime = tick()
     
-    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-        lp.Character.Humanoid.WalkSpeed = s.speed
-        local hrp = lp.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            if s.fly then
-                if not hrp:FindFirstChild("FlyBV") then
-                    local bv = Instance.new("BodyVelocity", hrp); bv.Name = "FlyBV"; bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                    local bg = Instance.new("BodyGyro", hrp); bg.Name = "FlyBG"; bg.MaxTorque = Vector3.new(1e6, 1e6, 1e6)
+    if Settings.Visuals.FullBright then
+        game:GetService("Lighting").Brightness = 2
+        game:GetService("Lighting").ClockTime = 14
+        game:GetService("Lighting").FogEnd = 100000
+        game:GetService("Lighting").GlobalShadows = false
+    end
+
+    if Settings.Misc.FPSBoost then
+        for _, v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Material ~= Enum.Material.SmoothPlastic then
+                v.Material = Enum.Material.SmoothPlastic
+            end
+        end
+    end
+
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local Hum = LocalPlayer.Character.Humanoid
+        local HRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if Settings.Movement.SpeedEnabled then Hum.WalkSpeed = Settings.Movement.WalkSpeed end
+        if Settings.Movement.JumpEnabled then Hum.JumpPower = Settings.Movement.JumpPower end
+        
+        if HRP then
+            if Settings.Movement.Fly then
+                if not HRP:FindFirstChild("QTFlyBV") then
+                    local BV = Instance.new("BodyVelocity", HRP)
+                    BV.Name = "QTFlyBV"
+                    BV.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                    local BG = Instance.new("BodyGyro", HRP)
+                    BG.Name = "QTFlyBG"
+                    BG.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
                 end
-                hrp.FlyBG.CFrame = c.CFrame
-                local move = lp.Character.Humanoid.MoveDirection
-                hrp.FlyBV.Velocity = (c.CFrame.LookVector * move.Magnitude * s.f_spd)
-                if move.Magnitude == 0 then hrp.FlyBV.Velocity = Vector3.new(0, 0.1, 0) end
+                
+                HRP.QTFlyBG.CFrame = Camera.CFrame
+                local MoveDir = Hum.MoveDirection
+                local Spd = Settings.Movement.FlySpeed
+                HRP.QTFlyBV.Velocity = (Camera.CFrame.LookVector * (MoveDir.Z < 0 and Spd or MoveDir.Z > 0 and -Spd or 0)) + 
+                                       (Camera.CFrame.RightVector * (MoveDir.X > 0 and Spd or MoveDir.X < 0 and -Spd or 0)) +
+                                       (Camera.CFrame.UpVector * (UserInputService:IsKeyDown(Enum.KeyCode.Space) and Spd or UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and -Spd or 0))
+                
+                if MoveDir.Magnitude == 0 and not UserInputService:IsKeyDown(Enum.KeyCode.Space) and not UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                     HRP.QTFlyBV.Velocity = Vector3.new(0, 0, 0)
+                end
             else
-                if hrp:FindFirstChild("FlyBV") then hrp.FlyBV:Destroy() end
-                if hrp:FindFirstChild("FlyBG") then hrp.FlyBG:Destroy() end
+                if HRP:FindFirstChild("QTFlyBV") then HRP.QTFlyBV:Destroy() end
+                if HRP:FindFirstChild("QTFlyBG") then HRP.QTFlyBG:Destroy() end
+            end
+            
+            if Settings.Movement.Noclip then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then part.CanCollide = false end
+                end
             end
         end
     end
 
-    for _, plr in pairs(p:GetPlayers()) do
-        if plr ~= lp and plr.Character then
-            local targetPart = plr.Character:FindFirstChild(s.part)
-            if targetPart then
-                if s.hit then
-                    targetPart.Size = Vector3.new(s.sz, s.sz, s.sz)
-                    targetPart.Color = Color3.fromRGB(0, 100, 255)
-                    targetPart.Transparency = 0.8
-                    targetPart.CanCollide = false
-                else
-                    targetPart.Size = (s.part == "Head" and Vector3.new(1.2, 1.2, 1.2) or Vector3.new(2, 2, 1))
-                    targetPart.Transparency = 0
-                    targetPart.CanCollide = true
-                end
-            end
-            local hi = plr.Character:FindFirstChild("Highlight")
-            if s.esp then
-                if not hi then hi = Instance.new("Highlight", plr.Character) end
-                hi.FillColor = clr
-            elseif hi then hi:Destroy() end
-        end
-    end
+    local ClosestTarget = nil
+    local MinDist = Settings.Combat.AimRadius
     
-    if s.aim and s.target and s.target.Parent then 
-        c.CFrame = CFrame.new(c.CFrame.Position, s.target.Position) 
-    end
-end)
+    for _, Plr in pairs(Players:GetPlayers()) do
+        if Plr ~= LocalPlayer and Plr.Character then
+            local TargetPart = GetTargetPart(Plr.Character)
+            
+            if Settings.Combat.Hitbox and TargetPart then
+                TargetPart.Size = Vector3.new(Settings.Combat.HitboxSize, Settings.Combat.HitboxSize, Settings.Combat.HitboxSize)
+                TargetPart.Transparency = Settings.Combat.HitboxTransparency
+                TargetPart.Color = Settings.Combat.HitboxColor
+                TargetPart.Material = Enum.Material.ForceField
+                TargetPart.CanCollide = false
+                TargetPart.Massless = true
+            end
+            
+            if Settings.Visuals.ESP_Box or Settings.Visuals.ESP_Name or Settings.Visuals.ESP_Line then
+                 local HL = Plr.Character:FindFirstChild("QTHighlight")
+                 if not HL then
+                     HL = Instance.new("Highlight", Plr.Character)
+                     HL.Name = "QTHighlight"
+                 end
+                 HL.Enabled = Settings.Visuals.ESP_Box
+                 HL.FillColor = Settings.Visuals.ESP_Color
+                 HL.OutlineColor = Color3.new(1,1,1)
+                 
+                 local Head = Plr.Character:FindFirstChild("Head")
+                 if Head then
+                     local NameTag = Head:FindFirstChild("QTNameTag")
+                     if Settings.Visuals.ESP_Name then
+                         if not NameTag then
+                             NameTag = Instance.new("BillboardGui", Head)
+                             NameTag.Name = "QTNameTag"
+                             NameTag.Size = UDim2.new(0, 100, 0, 50)
+                             NameTag.StudsOffset = Vector3.new(0, 2, 0)
+                             
