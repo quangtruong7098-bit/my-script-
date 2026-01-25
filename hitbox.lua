@@ -20,7 +20,7 @@ local Config = {
     TargetPlayer = ""
 }
 
-
+--// UI SETUP //--
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "QT_Supreme_V2"
 ScreenGui.ResetOnSpawn = false
@@ -63,7 +63,7 @@ Container.Position = UDim2.new(0, 150, 0, 10)
 Container.Size = UDim2.new(1, -160, 1, -20)
 Container.BackgroundTransparency = 1
 
-
+--// DRAG //--
 local function Drag(obj)
     local dragging, dragInput, dragStart, startPos
     obj.InputBegan:Connect(function(input)
@@ -83,7 +83,7 @@ local function Drag(obj)
 end
 Drag(Main)
 
-
+--// TAB CREATOR //--
 local Tabs = {}
 function Tabs:Create(name)
     local B = Instance.new("TextButton", TabContainer)
@@ -179,7 +179,7 @@ P4:AddButton("Teleport", function()
     end
 end)
 
-
+--// KILLAURA LOOP //--
 task.spawn(function()
     while true do
         task.wait(0.05) -- Tốc độ đánh
@@ -201,9 +201,9 @@ task.spawn(function()
     end
 end)
 
-
+--// MAIN HEARTBEAT //--
 RunService.Heartbeat:Connect(function()
-    
+    -- Fly Mobile
     if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
         local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -215,7 +215,7 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    
+    -- Hitbox & ESP Logic
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             local hrp = p.Character:FindFirstChild("HumanoidRootPart")
@@ -236,7 +236,7 @@ RunService.Heartbeat:Connect(function()
                 end
             end
             
-            
+            -- ESP logic
             if Config.ESP and not p.Character:FindFirstChild("QT_H") then
                 local h = Instance.new("Highlight", p.Character); h.Name = "QT_H"; h.FillColor = Color3.fromRGB(0, 255, 150)
             elseif not Config.ESP and p.Character:FindFirstChild("QT_H") then
@@ -245,20 +245,20 @@ RunService.Heartbeat:Connect(function()
         end
     end
     
-    
+    -- Speed logic
     if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
     end
 end)
 
-
+-- Inf Jump
 UserInputService.JumpRequest:Connect(function()
     if Config.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid:ChangeState(3)
     end
 end)
 
-
+-- Button Open/Close
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 OpenBtn.Size = UDim2.new(0, 45, 0, 45); OpenBtn.Position = UDim2.new(0, 10, 0.4, 0); OpenBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20); OpenBtn.Text = "QT"; OpenBtn.Font = Enum.Font.GothamBold; OpenBtn.TextColor3 = Color3.fromRGB(0, 255, 150); OpenBtn.TextSize = 16
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
