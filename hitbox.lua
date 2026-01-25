@@ -2,27 +2,34 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
 local Config = {
-    Xray = false,
-    XrayAlpha = 0.5,
-    ESP = false,
-    ESPName = false,
-    ESPColor = Color3.fromRGB(255, 0, 255),
     Hitbox = false,
     HitboxSize = 25,
     Speed = false,
-    SpeedVal = 100
+    SpeedVal = 100,
+    Jump = false,
+    JumpVal = 50,
+    Fly = false,
+    FlySpeed = 50,
+    ESP = false,
+    ESPName = false,
+    Xray = false,
+    XrayAlpha = 0.5,
+    FullBright = false,
+    InfJump = false,
+    TargetPlayer = nil
 }
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "QT_Supreme_V2"
+ScreenGui.Name = "QuangTruong_Supreme"
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local function CreateUI()
+local function CreateMainUI()
     local Main = Instance.new("Frame")
     local MainCorner = Instance.new("UICorner")
     local MainStroke = Instance.new("UIStroke")
@@ -34,42 +41,43 @@ local function CreateUI()
 
     Main.Name = "Main"
     Main.Parent = ScreenGui
-    Main.BackgroundColor3 = Color3.fromRGB(12, 10, 18)
-    Main.Position = UDim2.new(0.5, -280, 0.5, -170)
-    Main.Size = UDim2.new(0, 560, 0, 340)
+    Main.BackgroundColor3 = Color3.fromRGB(13, 10, 20)
+    Main.Position = UDim2.new(0.5, -310, 0.5, -190)
+    Main.Size = UDim2.new(0, 620, 0, 380)
     Main.ClipsDescendants = true
 
-    MainCorner.CornerRadius = UDim.new(0, 12)
+    MainCorner.CornerRadius = UDim.new(0, 16)
     MainCorner.Parent = Main
-    MainStroke.Color = Color3.fromRGB(200, 0, 255)
-    MainStroke.Thickness = 2
+    MainStroke.Color = Color3.fromRGB(190, 0, 255)
+    MainStroke.Thickness = 3
     MainStroke.Parent = Main
 
     Sidebar.Name = "Sidebar"
     Sidebar.Parent = Main
-    Sidebar.BackgroundColor3 = Color3.fromRGB(8, 6, 12)
-    Sidebar.Size = UDim2.new(0, 150, 1, 0)
+    Sidebar.BackgroundColor3 = Color3.fromRGB(7, 5, 12)
+    Sidebar.Size = UDim2.new(0, 170, 1, 0)
+    Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 16)
 
     Title.Parent = Sidebar
-    Title.Size = UDim2.new(1, 0, 0, 50)
+    Title.Size = UDim2.new(1, 0, 0, 70)
     Title.Font = Enum.Font.LuckiestGuy
-    Title.Text = "TITAN V2"
-    Title.TextColor3 = Color3.fromRGB(255, 0, 255)
+    Title.Text = "QUANG TRƯỜNG"
+    Title.TextColor3 = Color3.fromRGB(220, 0, 255)
     Title.TextSize = 24
     Title.BackgroundTransparency = 1
 
     SideContainer.Parent = Sidebar
-    SideContainer.Position = UDim2.new(0, 10, 0, 60)
-    SideContainer.Size = UDim2.new(1, -20, 1, -70)
+    SideContainer.Position = UDim2.new(0, 10, 0, 80)
+    SideContainer.Size = UDim2.new(1, -20, 1, -90)
     SideContainer.BackgroundTransparency = 1
     SideContainer.ScrollBarThickness = 0
     SideLayout.Parent = SideContainer
-    SideLayout.Padding = UDim.new(0, 8)
+    SideLayout.Padding = UDim.new(0, 12)
 
     PageContainer.Name = "PageContainer"
     PageContainer.Parent = Main
-    PageContainer.Position = UDim2.new(0, 160, 0, 15)
-    PageContainer.Size = UDim2.new(1, -175, 1, -30)
+    PageContainer.Position = UDim2.new(0, 185, 0, 25)
+    PageContainer.Size = UDim2.new(1, -200, 1, -50)
     PageContainer.BackgroundTransparency = 1
 
     local dragging, dragInput, dragStart, startPos
@@ -93,27 +101,28 @@ local function CreateUI()
     end)
 
     local Tabs = {}
-    function Tabs:NewTab(name)
+    function Tabs:AddTab(name)
         local TabBtn = Instance.new("TextButton")
         local Page = Instance.new("ScrollingFrame")
         local PageLayout = Instance.new("UIListLayout")
 
         TabBtn.Parent = SideContainer
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
+        TabBtn.Size = UDim2.new(1, 0, 0, 38)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(28, 18, 45)
         TabBtn.Font = Enum.Font.GothamBold
         TabBtn.Text = name
         TabBtn.TextColor3 = Color3.new(0.6, 0.6, 0.6)
-        TabBtn.TextSize = 13
-        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
+        TabBtn.TextSize = 14
+        Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 10)
 
         Page.Parent = PageContainer
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.Visible = false
-        Page.ScrollBarThickness = 0
+        Page.ScrollBarThickness = 2
+        Page.ScrollBarImageColor3 = Color3.fromRGB(190, 0, 255)
         PageLayout.Parent = Page
-        PageLayout.Padding = UDim.new(0, 10)
+        PageLayout.Padding = UDim.new(0, 15)
 
         TabBtn.MouseButton1Click:Connect(function()
             for _, v in pairs(PageContainer:GetChildren()) do v.Visible = false end
@@ -126,91 +135,99 @@ local function CreateUI()
 
         local Elements = {}
         function Elements:AddToggle(text, callback)
-            local Frame = Instance.new("Frame")
-            local Btn = Instance.new("TextButton")
-            local Dot = Instance.new("Frame")
-            Frame.Parent = Page
-            Frame.Size = UDim2.new(1, -5, 0, 35)
-            Frame.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+            local F = Instance.new("Frame", Page)
+            F.Size = UDim2.new(1, -10, 0, 45)
+            F.BackgroundColor3 = Color3.fromRGB(22, 18, 35)
+            Instance.new("UICorner", F).CornerRadius = UDim.new(0, 10)
             
-            local Lbl = Instance.new("TextLabel")
-            Lbl.Parent = Frame
-            Lbl.Size = UDim2.new(1, -50, 1, 0)
-            Lbl.Position = UDim2.new(0, 12, 0, 0)
-            Lbl.BackgroundTransparency = 1
-            Lbl.Font = Enum.Font.GothamSemibold
-            Lbl.Text = text
-            Lbl.TextColor3 = Color3.new(1, 1, 1)
-            Lbl.TextSize = 13
-            Lbl.TextXAlignment = Enum.TextXAlignment.Left
+            local L = Instance.new("TextLabel", F)
+            L.Size = UDim2.new(1, -70, 1, 0)
+            L.Position = UDim2.new(0, 15, 0, 0)
+            L.BackgroundTransparency = 1
+            L.Font = Enum.Font.GothamSemibold
+            L.Text = text
+            L.TextColor3 = Color3.new(1, 1, 1)
+            L.TextSize = 14
+            L.TextXAlignment = Enum.TextXAlignment.Left
 
-            Btn.Parent = Frame
-            Btn.Position = UDim2.new(1, -40, 0.5, -8)
-            Btn.Size = UDim2.new(0, 32, 0, 16)
-            Btn.BackgroundColor3 = Color3.fromRGB(45, 40, 50)
-            Btn.Text = ""
-            Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
+            local B = Instance.new("TextButton", F)
+            B.Position = UDim2.new(1, -50, 0.5, -11)
+            B.Size = UDim2.new(0, 40, 0, 22)
+            B.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+            B.Text = ""
+            Instance.new("UICorner", B).CornerRadius = UDim.new(1, 0)
 
-            Dot.Parent = Btn
-            Dot.Size = UDim2.new(0, 12, 0, 12)
-            Dot.Position = UDim2.new(0, 2, 0.5, -6)
-            Dot.BackgroundColor3 = Color3.new(1, 1, 1)
-            Instance.new("UICorner", Dot).CornerRadius = UDim.new(1, 0)
+            local D = Instance.new("Frame", B)
+            D.Size = UDim2.new(0, 18, 0, 18)
+            D.Position = UDim2.new(0, 2, 0.5, -9)
+            D.BackgroundColor3 = Color3.new(1, 1, 1)
+            Instance.new("UICorner", D).CornerRadius = UDim.new(1, 0)
 
             local s = false
-            Btn.MouseButton1Click:Connect(function()
+            B.MouseButton1Click:Connect(function()
                 s = not s
-                TweenService:Create(Dot, TweenInfo.new(0.2), {Position = s and UDim2.new(0, 18, 0.5, -6) or UDim2.new(0, 2, 0.5, -6)}):Play()
-                TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = s and Color3.fromRGB(200, 0, 255) or Color3.fromRGB(45, 40, 50)}):Play()
+                TweenService:Create(D, TweenInfo.new(0.25), {Position = s and UDim2.new(0, 20, 0.5, -9) or UDim2.new(0, 2, 0.5, -9)}):Play()
+                TweenService:Create(B, TweenInfo.new(0.25), {BackgroundColor3 = s and Color3.fromRGB(190, 0, 255) or Color3.fromRGB(50, 50, 65)}):Play()
                 callback(s)
             end)
         end
 
-        function Elements:AddInput(text, placeholder, callback)
-            local Frame = Instance.new("Frame")
-            Frame.Parent = Page
-            Frame.Size = UDim2.new(1, -5, 0, 40)
-            Frame.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
-            Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+        function Elements:AddInput(text, callback)
+            local F = Instance.new("Frame", Page)
+            F.Size = UDim2.new(1, -10, 0, 50)
+            F.BackgroundColor3 = Color3.fromRGB(22, 18, 35)
+            Instance.new("UICorner", F).CornerRadius = UDim.new(0, 10)
 
-            local Lbl = Instance.new("TextLabel")
-            Lbl.Parent = Frame
-            Lbl.Size = UDim2.new(0.6, 0, 1, 0)
-            Lbl.Position = UDim2.new(0, 12, 0, 0)
-            Lbl.BackgroundTransparency = 1
-            Lbl.Font = Enum.Font.GothamSemibold
-            Lbl.Text = text
-            Lbl.TextColor3 = Color3.new(1, 1, 1)
-            Lbl.TextSize = 13
-            Lbl.TextXAlignment = Enum.TextXAlignment.Left
+            local L = Instance.new("TextLabel", F)
+            L.Size = UDim2.new(0.6, 0, 1, 0)
+            L.Position = UDim2.new(0, 15, 0, 0)
+            L.BackgroundTransparency = 1
+            L.Font = Enum.Font.GothamSemibold
+            L.Text = text
+            L.TextColor3 = Color3.new(1, 1, 1)
+            L.TextSize = 14
+            L.TextXAlignment = Enum.TextXAlignment.Left
 
-            local Box = Instance.new("TextBox")
-            Box.Parent = Frame
-            Box.Size = UDim2.new(0, 80, 0, 24)
-            Box.Position = UDim2.new(1, -90, 0.5, -12)
-            Box.BackgroundColor3 = Color3.fromRGB(35, 30, 45)
+            local Box = Instance.new("TextBox", F)
+            Box.Size = UDim2.new(0, 80, 0, 32)
+            Box.Position = UDim2.new(1, -95, 0.5, -16)
+            Box.BackgroundColor3 = Color3.fromRGB(35, 30, 55)
             Box.Font = Enum.Font.GothamBold
-            Box.PlaceholderText = placeholder
             Box.Text = ""
+            Box.PlaceholderText = "Nhập..."
             Box.TextColor3 = Color3.new(1, 1, 1)
-            Box.TextSize = 12
-            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
+            Box.TextSize = 13
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 8)
 
             Box.FocusLost:Connect(function()
                 callback(Box.Text)
             end)
         end
+
+        function Elements:AddButton(text, callback)
+            local B = Instance.new("TextButton", Page)
+            B.Size = UDim2.new(1, -10, 0, 45)
+            B.BackgroundColor3 = Color3.fromRGB(40, 20, 70)
+            B.Font = Enum.Font.GothamBold
+            B.Text = text
+            B.TextColor3 = Color3.new(1, 1, 1)
+            B.TextSize = 14
+            Instance.new("UICorner", B).CornerRadius = UDim.new(0, 10)
+            B.MouseButton1Click:Connect(callback)
+        end
+
         return Elements
     end
     return Tabs
 end
 
-local Tabs = CreateUI()
-local MainTabs = Tabs:NewTab("Main")
-local VisTabs = Tabs:NewTab("Visuals")
+local Tabs = CreateMainUI()
+local Combat = Tabs:AddTab("Combat")
+local Visuals = Tabs:AddTab("Visuals")
+local Movement = Tabs:AddTab("Movement")
+local Teleport = Tabs:AddTab("Teleport")
 
-MainTabs:AddToggle("Enable Hitbox", function(v) 
+Combat:AddToggle("Hitbox Expander", function(v) 
     Config.Hitbox = v 
     if not v then
         for _, p in pairs(Players:GetPlayers()) do
@@ -221,12 +238,9 @@ MainTabs:AddToggle("Enable Hitbox", function(v)
         end
     end
 end)
-MainTabs:AddInput("Hitbox Size", "Số (Vd: 20)", function(v) Config.HitboxSize = tonumber(v) or 25 end)
+Combat:AddInput("Hitbox Size", function(v) Config.HitboxSize = tonumber(v) or 25 end)
 
-MainTabs:AddToggle("Enable Speed", function(v) Config.Speed = v end)
-MainTabs:AddInput("Walk Speed", "Số (Vd: 100)", function(v) Config.SpeedVal = tonumber(v) or 16 end)
-
-VisTabs:AddToggle("Chams (Highlight)", function(v) 
+Visuals:AddToggle("ESP Chams", function(v) 
     Config.ESP = v 
     if not v then
         for _, p in pairs(Players:GetPlayers()) do
@@ -234,7 +248,7 @@ VisTabs:AddToggle("Chams (Highlight)", function(v)
         end
     end
 end)
-VisTabs:AddToggle("ESP Name (Tên)", function(v) 
+Visuals:AddToggle("ESP Tên Người Chơi", function(v) 
     Config.ESPName = v 
     if not v then
         for _, p in pairs(Players:GetPlayers()) do
@@ -244,23 +258,62 @@ VisTabs:AddToggle("ESP Name (Tên)", function(v)
         end
     end
 end)
+Visuals:AddToggle("Xray Nhìn Xuyên Bản Đồ", function(v) 
+    Config.Xray = v 
+    if not v then
+        for _, p in pairs(workspace:GetDescendants()) do
+            if p:IsA("BasePart") then p.LocalTransparencyModifier = 0 end
+        end
+    end
+end)
+Visuals:AddToggle("FullBright Siêu Sáng", function(v) 
+    Config.FullBright = v 
+    if not v then Lighting.Brightness = 1 Lighting.ClockTime = 14 end
+end)
+
+Movement:AddToggle("WalkSpeed (Tốc Độ)", function(v) Config.Speed = v end)
+Movement:AddInput("Tốc Độ Chạy", function(v) Config.SpeedVal = tonumber(v) or 16 end)
+Movement:AddToggle("Nhảy Vô Hạn", function(v) Config.InfJump = v end)
+Movement:AddToggle("Chế Độ Bay", function(v) Config.Fly = v end)
+Movement:AddInput("Tốc Độ Bay", function(v) Config.FlySpeed = tonumber(v) or 50 end)
+
+Teleport:AddInput("Tên Người Chơi (Cần bay đến)", function(v) Config.TargetPlayer = v end)
+Teleport:AddButton("Dịch Chuyển Ngay", function()
+    if Config.TargetPlayer then
+        for _, p in pairs(Players:GetPlayers()) do
+            if string.find(string.lower(p.Name), string.lower(Config.TargetPlayer)) or string.find(string.lower(p.DisplayName), string.lower(Config.TargetPlayer)) then
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                end
+            end
+        end
+    end
+end)
 
 RunService.RenderStepped:Connect(function()
+    if Config.FullBright then Lighting.Brightness = 2 Lighting.ClockTime = 14 end
+    
+    if Config.Xray then
+        for _, p in pairs(workspace:GetDescendants()) do
+            if p:IsA("BasePart") and not p:IsDescendantOf(LocalPlayer.Character) and not p.Parent:FindFirstChild("Humanoid") then
+                p.LocalTransparencyModifier = Config.XrayAlpha
+            end
+        end
+    end
+
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             if Config.Hitbox and p.Character:FindFirstChild("HumanoidRootPart") then
-                p.Character.HumanoidRootPart.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                p.Character.HumanoidRootPart.Transparency = 0.6
-                p.Character.HumanoidRootPart.CanCollide = false
-                p.Character.HumanoidRootPart.Color = Config.ESPColor
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                hrp.Transparency = 0.6
+                hrp.CanCollide = false
             end
             
-            if Config.ESP then
-                if not p.Character:FindFirstChild("QT_Cham") then
-                    local h = Instance.new("Highlight", p.Character)
-                    h.Name = "QT_Cham"
-                    h.FillColor = Config.ESPColor
-                end
+            if Config.ESP and not p.Character:FindFirstChild("QT_Cham") then
+                local h = Instance.new("Highlight", p.Character)
+                h.Name = "QT_Cham"
+                h.FillColor = Color3.fromRGB(190, 0, 255)
             end
 
             if Config.ESPName and p.Character:FindFirstChild("Head") then
@@ -275,27 +328,41 @@ RunService.RenderStepped:Connect(function()
                     tl.Size = UDim2.new(1, 0, 1, 0)
                     tl.Font = Enum.Font.GothamBold
                     tl.TextColor3 = Color3.new(1, 1, 1)
-                    tl.TextStrokeTransparency = 0
                     tl.TextSize = 14
-                    tl.Text = p.Name
+                    tl.Text = p.DisplayName
                 end
             end
         end
     end
+
     if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
     end
+    
+    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        hrp.Velocity = Vector3.new(0, 0, 0)
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -Config.FlySpeed/10) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then hrp.CFrame = hrp.CFrame * CFrame.new(0, 0, Config.FlySpeed/10) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then hrp.CFrame = hrp.CFrame * CFrame.new(0, Config.FlySpeed/10, 0) end
+    end
 end)
 
-local Tgl = Instance.new("TextButton", ScreenGui)
-Tgl.Size = UDim2.new(0, 45, 0, 45)
-Tgl.Position = UDim2.new(0, 15, 0.4, 0)
-Tgl.BackgroundColor3 = Color3.fromRGB(200, 0, 255)
-Tgl.Text = "QT"
-Tgl.Font = Enum.Font.LuckiestGuy
-Tgl.TextColor3 = Color3.new(1, 1, 1)
-Tgl.TextSize = 18
-Instance.new("UICorner", Tgl).CornerRadius = UDim.new(1, 0)
-Tgl.MouseButton1Click:Connect(function() ScreenGui.Main.Visible = not ScreenGui.Main.Visible end)
+UserInputService.JumpRequest:Connect(function()
+    if Config.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+local ToggleMain = Instance.new("TextButton", ScreenGui)
+ToggleMain.Size = UDim2.new(0, 55, 0, 55)
+ToggleMain.Position = UDim2.new(0, 15, 0.4, 0)
+ToggleMain.BackgroundColor3 = Color3.fromRGB(190, 0, 255)
+ToggleMain.Text = "QT"
+ToggleMain.Font = Enum.Font.LuckiestGuy
+ToggleMain.TextColor3 = Color3.new(1, 1, 1)
+ToggleMain.TextSize = 22
+Instance.new("UICorner", ToggleMain).CornerRadius = UDim.new(1, 0)
+ToggleMain.MouseButton1Click:Connect(function() ScreenGui.Main.Visible = not ScreenGui.Main.Visible end)
 
 ScreenGui.Main.PageContainer:GetChildren()[1].Visible = true
