@@ -14,27 +14,28 @@ local Config = {
     Fly = false,
     FlySpeed = 50,
     Noclip = false,
-    ESP = false,
-    InfJump = false
+    ESP = false
 }
 
---// UI SYSTEM //--
+--// UI //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 350, 0, 420)
 Main.Position = UDim2.new(0.5, -175, 0.5, -210)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Instance.new("UICorner", Main)
-local MStroke = Instance.new("UIStroke", Main)
-MStroke.Color = Color3.fromRGB(0, 255, 150)
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Color = Color3.fromRGB(0, 255, 150)
+Stroke.Thickness = 2
 
 local Container = Instance.new("ScrollingFrame", Main)
 Container.Size = UDim2.new(1, -20, 1, -60)
 Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 2
+Container.ScrollBarThickness = 0
 Instance.new("UIListLayout", Container).Padding = UDim.new(0, 5)
 
+-- Nút ẩn/hiện
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
 ToggleBtn.Position = UDim2.new(0, 10, 0.5, 0)
@@ -56,6 +57,15 @@ local function AddToggle(text, cfg_key)
         Config[cfg_key] = not Config[cfg_key]
         btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
         btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(30, 30, 30)
+        
+        -- Xóa ESP ngay lập tức nếu tắt
+        if cfg_key == "ESP" and not Config.ESP then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("QT_ESP") then
+                    p.Character.QT_ESP:Destroy()
+                end
+            end
+        end
     end)
 end
 
@@ -64,90 +74,77 @@ local function AddInput(text, cfg_key, def)
     box.Size = UDim2.new(1, 0, 0, 35)
     box.PlaceholderText = text .. " [" .. def .. "]"
     box.Text = ""
-    box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    box.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     box.TextColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", box)
     box.FocusLost:Connect(function() Config[cfg_key] = tonumber(box.Text) or def end)
 end
 
---// ADD CONTROLS //--
-AddToggle("Noclip (Xuyên Tường)", "Noclip")
+--// CONTROLS //--
+AddToggle("Hiện Người Chơi (ESP)", "ESP")
 AddToggle("Hitbox (Ghost Mode)", "Hitbox")
 AddInput("Size Hitbox", "HitboxSize", 25)
-AddToggle("Killaura (Chém Liên Tục)", "Killaura")
+AddToggle("Tự Đánh (Killaura)", "Killaura")
 AddInput("Tầm Chém", "KillauraRange", 25)
-AddToggle("Speed (Tốc Độ)", "Speed")
-AddInput("Số Tốc Độ", "SpeedVal", 100)
+AddToggle("Chạy Nhanh", "Speed")
+AddInput("Tốc Độ", "SpeedVal", 100)
+AddToggle("Xuyên Tường (Noclip)", "Noclip")
 AddToggle("Bay (Fly)", "Fly")
-AddToggle("Hiện ESP", "ESP")
 
---// LOGIC FIX TRIỆT ĐỂ //--
+--// LOGIC CHUẨN //--
 
--- 1. Noclip & Local Physics (Chỉ tác động lên bản thân để không văng)
+-- 1. Xử lý ESP (Chạy riêng để không lag)
+task.spawn(function()
+    while task.wait(0.5) do
+        if Config.ESP then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    if not p.Character:FindFirstChild("QT_ESP") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "QT_ESP"
+                        hl.Parent = p.Character
+                        hl.FillColor = Color3.fromRGB(0, 255, 150)
+                        hl.OutlineColor = Color3.new(1, 1, 1)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- 2. Xử lý Hitbox & Noclip (Stepped tối ưu)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then
                 if Config.Noclip then
                     v.CanCollide = false
-                else
-                    -- Luôn tắt va chạm vũ khí để tránh bị đẩy khi hitbox to chạm vào tool
-                    if v.Parent:IsA("Tool") or v.Name == "Handle" then
-                        v.CanCollide = false
-                    end
+                elseif v.Parent:IsA("Tool") or v.Name == "Handle" then
+                    v.CanCollide = false -- Chống văng khi cầm tool
                 end
+            end
+        end
+    end
+
+    if Config.Hitbox then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                hrp.Transparency = 0.8
+                hrp.CanCollide = false
             end
         end
     end
 end)
 
--- 2. Hitbox Expansion (Phương pháp tối ưu - Không đóng băng người chơi)
-task.spawn(function()
-    while task.wait(0.5) do -- Giảm tần suất cập nhật để tránh Freeze vật lý
-        if Config.Hitbox then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = p.Character.HumanoidRootPart
-                    -- Chỉ thay đổi thuộc tính tối thiểu
-                    hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                    hrp.Transparency = 0.8
-                    hrp.CanCollide = false
-                    hrp.Massless = true
-                    -- TUYỆT ĐỐI không can thiệp vào Velocity hay CFrame của đối thủ ở đây
-                end
-            end
-        end
-    end
-end)
-
--- 3. Killaura (Đánh liên tục và hiệu quả)
-task.spawn(function()
-    while task.wait(0.05) do -- Tốc độ đánh mượt
-        if Config.Killaura and LocalPlayer.Character then
-            local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
-            if tool then
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local root = p.Character.HumanoidRootPart
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
-                        
-                        -- Chém dựa trên vùng ảo (Range)
-                        if dist <= Config.KillauraRange or dist <= (Config.HitboxSize/2) then
-                            tool:Activate()
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- 4. Các tính năng khác
+-- 3. Killaura & Speed & Fly
 RunService.Heartbeat:Connect(function()
     -- Speed
     if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
     end
+    
     -- Fly
     if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         local hrp = LocalPlayer.Character.HumanoidRootPart
@@ -156,12 +153,18 @@ RunService.Heartbeat:Connect(function()
             hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
         end
     end
-    -- ESP
-    if Config.ESP then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and not p.Character:FindFirstChild("QT_ESP") then
-                local hl = Instance.new("Highlight", p.Character)
-                hl.Name = "QT_ESP"; hl.FillColor = Color3.fromRGB(0, 255, 150)
+
+    -- Killaura
+    if Config.Killaura and LocalPlayer.Character then
+        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                    if d <= Config.KillauraRange or d <= (Config.HitboxSize/2) then
+                        tool:Activate()
+                    end
+                end
             end
         end
     end
