@@ -13,172 +13,127 @@ local Config = {
     SpeedVal = 100,
     Fly = false,
     FlySpeed = 50,
-    Noclip = false, -- Chức năng mới
+    Noclip = false,
     ESP = false,
     InfJump = false
 }
 
 --// UI SYSTEM //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "QT_Supreme_V6_Final"
-
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 400, 0, 380)
-Main.Position = UDim2.new(0.5, -200, 0.5, -190)
+Main.Size = UDim2.new(0, 350, 0, 420)
+Main.Position = UDim2.new(0.5, -175, 0.5, -210)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Main)
 local MStroke = Instance.new("UIStroke", Main)
-MStroke.Thickness = 2
 MStroke.Color = Color3.fromRGB(0, 255, 150)
-
--- Nút QT Ẩn/Hiện Menu
-local ToggleBtn = Instance.new("TextButton", ScreenGui)
-ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
-ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-ToggleBtn.Text = "QT"
-ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
-ToggleBtn.Font = Enum.Font.GothamBold
-ToggleBtn.TextSize = 18
-Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
-local TStroke = Instance.new("UIStroke", ToggleBtn)
-TStroke.Thickness = 2
-TStroke.Color = Color3.fromRGB(0, 255, 150)
-ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
 local Container = Instance.new("ScrollingFrame", Main)
 Container.Size = UDim2.new(1, -20, 1, -60)
 Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
 Container.ScrollBarThickness = 2
-local UIList = Instance.new("UIListLayout", Container)
-UIList.Padding = UDim.new(0, 5)
+Instance.new("UIListLayout", Container).Padding = UDim.new(0, 5)
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "QUANG TRƯỜNG HUB V6"
-Title.TextColor3 = Color3.fromRGB(0, 255, 150)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 18
-Title.BackgroundTransparency = 1
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
+ToggleBtn.Position = UDim2.new(0, 10, 0.5, 0)
+ToggleBtn.Text = "QT"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
---// UI HELPER FUNCTIONS //--
+--// UI HELPERS //--
 local function AddToggle(text, cfg_key)
     local btn = Instance.new("TextButton", Container)
-    btn.Size = UDim2.new(1, -5, 0, 35)
+    btn.Size = UDim2.new(1, 0, 0, 35)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = "  " .. text .. ": OFF"
+    btn.Text = text .. ": OFF"
     btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 12
-    btn.TextXAlignment = Enum.TextXAlignment.Left
     Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(function()
         Config[cfg_key] = not Config[cfg_key]
-        btn.Text = "  " .. text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
+        btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
         btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(30, 30, 30)
     end)
 end
 
-local function AddInput(text, cfg_key, default_val)
-    local frame = Instance.new("Frame", Container)
-    frame.Size = UDim2.new(1, -5, 0, 35); frame.BackgroundTransparency = 1
-    local L = Instance.new("TextLabel", frame)
-    L.Size = UDim2.new(0.6, 0, 1, 0); L.Text = "  " .. text; L.TextColor3 = Color3.new(0.8, 0.8, 0.8); L.Font = Enum.Font.Gotham; L.TextSize = 12; L.TextXAlignment = Enum.TextXAlignment.Left; L.BackgroundTransparency = 1
-    local txt = Instance.new("TextBox", frame)
-    txt.Size = UDim2.new(0.3, 0, 0.8, 0); txt.Position = UDim2.new(0.7, -5, 0.1, 0); txt.BackgroundColor3 = Color3.fromRGB(25, 25, 25); txt.Text = tostring(default_val); txt.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", txt)
-    txt.FocusLost:Connect(function() Config[cfg_key] = tonumber(txt.Text) or Config[cfg_key] end)
+local function AddInput(text, cfg_key, def)
+    local box = Instance.new("TextBox", Container)
+    box.Size = UDim2.new(1, 0, 0, 35)
+    box.PlaceholderText = text .. " [" .. def .. "]"
+    box.Text = ""
+    box.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    box.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", box)
+    box.FocusLost:Connect(function() Config[cfg_key] = tonumber(box.Text) or def end)
 end
 
---// ADDING CONTROLS //--
-AddToggle("Đi Xuyên Tường (Noclip)", "Noclip")
-AddToggle("Mở Rộng Hitbox (1000 Max)", "Hitbox")
+--// ADD CONTROLS //--
+AddToggle("Noclip (Xuyên Tường)", "Noclip")
+AddToggle("Hitbox (Ghost Mode)", "Hitbox")
 AddInput("Size Hitbox", "HitboxSize", 25)
-AddToggle("Tự Đánh Liên Tục (Killaura)", "Killaura")
-AddInput("Tầm Đánh", "KillauraRange", 25)
-AddToggle("Chạy Nhanh", "Speed")
-AddInput("Tốc độ", "SpeedVal", 100)
+AddToggle("Killaura (Chém Liên Tục)", "Killaura")
+AddInput("Tầm Chém", "KillauraRange", 25)
+AddToggle("Speed (Tốc Độ)", "Speed")
+AddInput("Số Tốc Độ", "SpeedVal", 100)
 AddToggle("Bay (Fly)", "Fly")
-AddToggle("Hiện Người (ESP)", "ESP")
-AddToggle("Nhảy Vô Hạn", "InfJump")
+AddToggle("Hiện ESP", "ESP")
 
---// CORE LOGIC //--
+--// LOGIC FIX TRIỆT ĐỂ //--
 
--- Noclip & Hitbox Physics (Stepped xử lý vật lý)
+-- 1. Noclip & Local Physics (Chỉ tác động lên bản thân để không văng)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
-        -- Xử lý Noclip
-        if Config.Noclip then
-            for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.CanCollide == true then
-                    part.CanCollide = false
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if Config.Noclip then
+                    v.CanCollide = false
+                else
+                    -- Luôn tắt va chạm vũ khí để tránh bị đẩy khi hitbox to chạm vào tool
+                    if v.Parent:IsA("Tool") or v.Name == "Handle" then
+                        v.CanCollide = false
+                    end
                 end
             end
         end
-        
-        -- Chống văng vật lý (Luôn chạy cho nhân vật & vũ khí)
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") and not Config.Noclip then -- Chỉ can thiệp CanCollide nếu không bật Noclip
-                v.CanCollide = false 
-            end
-        end
-    end
-
-    -- Hitbox Expand
-    if Config.Hitbox then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = p.Character.HumanoidRootPart
-                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                hrp.Transparency = 0.8
-                hrp.CanCollide = false
-                hrp.Massless = true
-                hrp.Velocity = Vector3.zero
-            end
-        end
     end
 end)
 
--- Speed, Fly, ESP (Heartbeat xử lý frame)
-RunService.Heartbeat:Connect(function()
-    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
-    end
-
-    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.Velocity = Vector3.zero
-        if LocalPlayer.Character:FindFirstChild("Humanoid").MoveDirection.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
-        end
-    end
-
-    if Config.ESP then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and not p.Character:FindFirstChild("QT_HL") then
-                local hl = Instance.new("Highlight", p.Character)
-                hl.Name = "QT_HL"; hl.FillColor = Color3.fromRGB(0, 255, 150)
-            end
-        end
-    end
-end)
-
--- Killaura Fix (Đánh liên tục)
+-- 2. Hitbox Expansion (Phương pháp tối ưu - Không đóng băng người chơi)
 task.spawn(function()
-    while task.wait() do -- Tốc độ lặp cực nhanh
+    while task.wait(0.5) do -- Giảm tần suất cập nhật để tránh Freeze vật lý
+        if Config.Hitbox then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = p.Character.HumanoidRootPart
+                    -- Chỉ thay đổi thuộc tính tối thiểu
+                    hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                    hrp.Transparency = 0.8
+                    hrp.CanCollide = false
+                    hrp.Massless = true
+                    -- TUYỆT ĐỐI không can thiệp vào Velocity hay CFrame của đối thủ ở đây
+                end
+            end
+        end
+    end
+end)
+
+-- 3. Killaura (Đánh liên tục và hiệu quả)
+task.spawn(function()
+    while task.wait(0.05) do -- Tốc độ đánh mượt
         if Config.Killaura and LocalPlayer.Character then
             local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
             if tool then
                 for _, p in pairs(Players:GetPlayers()) do
                     if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                        if dist <= Config.KillauraRange then
-                            -- Giải pháp đánh liên tục: Activate nhiều lần
+                        local root = p.Character.HumanoidRootPart
+                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                        
+                        -- Chém dựa trên vùng ảo (Range)
+                        if dist <= Config.KillauraRange or dist <= (Config.HitboxSize/2) then
                             tool:Activate()
-                            -- Một số game cần lệnh này để chém nhanh hơn
-                            pcall(function() tool:Hit(p.Character.HumanoidRootPart) end)
                         end
                     end
                 end
@@ -187,26 +142,27 @@ task.spawn(function()
     end
 end)
 
--- Jump Request
-UserInputService.JumpRequest:Connect(function()
-    if Config.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid:ChangeState(3)
+-- 4. Các tính năng khác
+RunService.Heartbeat:Connect(function()
+    -- Speed
+    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
     end
-end)
-
--- Drag System
-local dragging, dragStart, startPos
-Main.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true; dragStart = input.Position; startPos = Main.Position
+    -- Fly
+    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        hrp.Velocity = Vector3.zero
+        if LocalPlayer.Character.Humanoid.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
+        end
     end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    -- ESP
+    if Config.ESP then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and not p.Character:FindFirstChild("QT_ESP") then
+                local hl = Instance.new("Highlight", p.Character)
+                hl.Name = "QT_ESP"; hl.FillColor = Color3.fromRGB(0, 255, 150)
+            end
+        end
     end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
 end)
