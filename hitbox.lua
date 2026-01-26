@@ -10,21 +10,20 @@ local Config = {
     Killaura = false,
     KillauraRange = 25,
     Speed = false,
-    SpeedVal = 100,
+    SpeedVal = 100, -- Đây là chỗ chỉnh tốc độ chạy
     Fly = false,
     FlySpeed = 50,
     ESP = false,
-    ESPName = false,
     InfJump = false
 }
 
 --// UI SYSTEM //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "QT_Supreme_V4"
+ScreenGui.Name = "QT_Supreme_V5_SpeedUpdate"
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 400, 0, 300)
-Main.Position = UDim2.new(0.5, -200, 0.5, -150)
+Main.Size = UDim2.new(0, 400, 0, 350)
+Main.Position = UDim2.new(0.5, -200, 0.5, -175)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Main.BorderSizePixel = 0
 Main.Visible = true
@@ -33,7 +32,7 @@ local MStroke = Instance.new("UIStroke", Main)
 MStroke.Thickness = 2
 MStroke.Color = Color3.fromRGB(0, 255, 150)
 
--- Nút Ẩn/Hiện (Toggle Button)
+-- Nút QT Ẩn/Hiện Menu
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
 ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
@@ -51,48 +50,61 @@ ToggleBtn.MouseButton1Click:Connect(function()
     Main.Visible = not Main.Visible
 end)
 
--- Sidebar Tabs
-local TabFrame = Instance.new("Frame", Main)
-TabFrame.Size = UDim2.new(0, 100, 1, 0)
-TabFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Instance.new("UICorner", TabFrame)
-
+-- Container chứa các nút
 local Container = Instance.new("ScrollingFrame", Main)
-Container.Size = UDim2.new(1, -110, 1, -20)
-Container.Position = UDim2.new(0, 105, 0, 10)
+Container.Size = UDim2.new(1, -20, 1, -60)
+Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
 Container.ScrollBarThickness = 2
 local UIList = Instance.new("UIListLayout", Container)
 UIList.Padding = UDim.new(0, 5)
 
---// FUNCTIONS //--
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "QUANG TRƯỜNG HUB V5"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.BackgroundTransparency = 1
+
+--// UI HELPER FUNCTIONS //--
 local function AddToggle(text, cfg_key)
     local btn = Instance.new("TextButton", Container)
     btn.Size = UDim2.new(1, -5, 0, 35)
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.Text = text .. ": OFF"
+    btn.Text = "  " .. text .. ": OFF"
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.GothamSemibold
     btn.TextSize = 12
+    btn.TextXAlignment = Enum.TextXAlignment.Left
     Instance.new("UICorner", btn)
 
     btn.MouseButton1Click:Connect(function()
         Config[cfg_key] = not Config[cfg_key]
-        btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
+        btn.Text = "  " .. text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
         btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(30, 30, 30)
     end)
 end
 
-local function AddInput(text, cfg_key)
+local function AddInput(text, cfg_key, default_val)
     local frame = Instance.new("Frame", Container)
     frame.Size = UDim2.new(1, -5, 0, 35)
     frame.BackgroundTransparency = 1
     
+    local L = Instance.new("TextLabel", frame)
+    L.Size = UDim2.new(0.6, 0, 1, 0)
+    L.Text = "  " .. text
+    L.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+    L.Font = Enum.Font.Gotham
+    L.TextSize = 12
+    L.TextXAlignment = Enum.TextXAlignment.Left
+    L.BackgroundTransparency = 1
+
     local txt = Instance.new("TextBox", frame)
-    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.Size = UDim2.new(0.3, 0, 0.8, 0)
+    txt.Position = UDim2.new(0.7, -5, 0.1, 0)
     txt.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    txt.PlaceholderText = text
-    txt.Text = ""
+    txt.Text = tostring(default_val)
     txt.TextColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", txt)
     txt.FocusLost:Connect(function()
@@ -100,24 +112,64 @@ local function AddInput(text, cfg_key)
     end)
 end
 
---// UI CONTENT //--
-AddToggle("Hitbox Expander", "Hitbox")
-AddInput("Hitbox Size (Max 1000)", "HitboxSize")
-AddToggle("Killaura (Auto Attack)", "Killaura")
-AddInput("Aura Range", "KillauraRange")
-AddToggle("ESP Highlight", "ESP")
-AddToggle("Speed Hack", "Speed")
-AddInput("Speed Value", "SpeedVal")
-AddToggle("Fly Mobile", "Fly")
-AddInput("Fly Speed", "FlySpeed")
-AddToggle("Infinite Jump", "InfJump")
+--// ADDING CONTROLS //--
+AddToggle("Chạy Nhanh (Speed)", "Speed")
+AddInput("Tốc độ chạy", "SpeedVal", 100)
 
---// CORE LOGIC //--
+AddToggle("Mở Rộng Hitbox", "Hitbox")
+AddInput("Size Hitbox (Max 1000)", "HitboxSize", 25)
 
--- Anti-Fling & Hitbox Logic
+AddToggle("Tự Đánh (Killaura)", "Killaura")
+AddInput("Tầm Đánh", "KillauraRange", 25)
+
+AddToggle("Bay (Fly Mobile)", "Fly")
+AddInput("Tốc độ bay", "FlySpeed", 50)
+
+AddToggle("Hiện Người Chơi (ESP)", "ESP")
+AddToggle("Nhảy Vô Hạn", "InfJump")
+
+--// CORE LOGIC (VẬN HÀNH) //--
+
+-- 1. Xử lý Chạy Nhanh & Bay & ESP (Heartbeat chạy liên tục)
+RunService.Heartbeat:Connect(function()
+    -- Xử lý Speed
+    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
+    elseif not Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        -- Khi tắt Speed, trả về tốc độ mặc định (thường là 16)
+        if LocalPlayer.Character.Humanoid.WalkSpeed ~= 16 then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        end
+    end
+
+    -- Xử lý Fly
+    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+        hrp.Velocity = Vector3.zero
+        if hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
+        end
+    end
+
+    -- Xử lý ESP
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if Config.ESP and not p.Character:FindFirstChild("QT_HL") then
+                local hl = Instance.new("Highlight", p.Character)
+                hl.Name = "QT_HL"
+                hl.FillColor = Color3.fromRGB(0, 255, 150)
+            elseif not Config.ESP and p.Character:FindFirstChild("QT_HL") then
+                p.Character.QT_HL:Destroy()
+            end
+        end
+    end
+end)
+
+-- 2. Xử lý Hitbox & Anti-Fling (Chạy ở Stepped để chống bị đẩy khi chỉnh 1000)
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
-        -- Vô hiệu hóa va chạm tool để không bị văng khi cầm vũ khí
+        -- Luôn tắt va chạm vũ khí của bản thân
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
             if v:IsA("BasePart") then v.CanCollide = false end
         end
@@ -137,38 +189,7 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Fly & Speed & ESP Logic
-RunService.Heartbeat:Connect(function()
-    -- Speed
-    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
-    end
-
-    -- Fly
-    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
-        hrp.Velocity = Vector3.zero
-        if hum and hum.MoveDirection.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
-        end
-    end
-
-    -- ESP
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if Config.ESP and not p.Character:FindFirstChild("QT_HL") then
-                local hl = Instance.new("Highlight", p.Character)
-                hl.Name = "QT_HL"
-                hl.FillColor = Color3.fromRGB(0, 255, 150)
-            elseif not Config.ESP and p.Character:FindFirstChild("QT_HL") then
-                p.Character.QT_HL:Destroy()
-            end
-        end
-    end
-end)
-
--- Killaura Loop
+-- 3. Killaura (Tự đánh)
 task.spawn(function()
     while task.wait(0.1) do
         if Config.Killaura and LocalPlayer.Character then
@@ -187,14 +208,14 @@ task.spawn(function()
     end
 end)
 
--- Inf Jump
+-- 4. Nhảy Vô Hạn
 UserInputService.JumpRequest:Connect(function()
     if Config.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid:ChangeState(3)
     end
 end)
 
--- Drag UI
+-- Hệ thống Kéo Menu (Drag)
 local dragging, dragInput, dragStart, startPos
 Main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
