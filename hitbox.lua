@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 local Config = {
     Hitbox = false,
@@ -9,46 +10,116 @@ local Config = {
     Killaura = false,
     KillauraRange = 25,
     Speed = false,
-    SpeedVal = 100
+    SpeedVal = 100,
+    Fly = false,
+    FlySpeed = 50,
+    ESP = false,
+    ESPName = false,
+    InfJump = false
 }
 
---// UI GỌN NHẸ //--
+--// UI SYSTEM //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "QT_HyperHitbox"
+ScreenGui.Name = "QT_Supreme_V4"
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 250, 0, 300)
-Main.Position = UDim2.new(0.5, -125, 0.5, -150)
-Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.Size = UDim2.new(0, 400, 0, 300)
+Main.Position = UDim2.new(0.5, -200, 0.5, -150)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Main.BorderSizePixel = 0
-Instance.new("UICorner", Main)
+Main.Visible = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+local MStroke = Instance.new("UIStroke", Main)
+MStroke.Thickness = 2
+MStroke.Color = Color3.fromRGB(0, 255, 150)
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "QUANG TRƯỜNG - MAX 1000"
-Title.TextColor3 = Color3.new(0, 1, 0.6)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
+-- Nút Ẩn/Hiện (Toggle Button)
+local ToggleBtn = Instance.new("TextButton", ScreenGui)
+ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+ToggleBtn.Text = "QT"
+ToggleBtn.TextColor3 = Color3.fromRGB(0, 255, 150)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 18
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+local TStroke = Instance.new("UIStroke", ToggleBtn)
+TStroke.Thickness = 2
+TStroke.Color = Color3.fromRGB(0, 255, 150)
 
---// LOGIC CHỐNG VĂNG (ANTI-FLING 100%) //--
--- Hàm này cực kỳ quan trọng để bạn không bị đẩy đi khi chỉnh size 1000
-local function DisableCollision(char)
-    for _, part in pairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-            part.CanTouch = false -- Tắt va chạm chạm (Touch) để không kích hoạt vật lý phản lực
-        end
-    end
+ToggleBtn.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
+
+-- Sidebar Tabs
+local TabFrame = Instance.new("Frame", Main)
+TabFrame.Size = UDim2.new(0, 100, 1, 0)
+TabFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Instance.new("UICorner", TabFrame)
+
+local Container = Instance.new("ScrollingFrame", Main)
+Container.Size = UDim2.new(1, -110, 1, -20)
+Container.Position = UDim2.new(0, 105, 0, 10)
+Container.BackgroundTransparency = 1
+Container.ScrollBarThickness = 2
+local UIList = Instance.new("UIListLayout", Container)
+UIList.Padding = UDim.new(0, 5)
+
+--// FUNCTIONS //--
+local function AddToggle(text, cfg_key)
+    local btn = Instance.new("TextButton", Container)
+    btn.Size = UDim2.new(1, -5, 0, 35)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.Text = text .. ": OFF"
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 12
+    Instance.new("UICorner", btn)
+
+    btn.MouseButton1Click:Connect(function()
+        Config[cfg_key] = not Config[cfg_key]
+        btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
+        btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(30, 30, 30)
+    end)
 end
 
--- Vòng lặp cưỡng bức vật lý
+local function AddInput(text, cfg_key)
+    local frame = Instance.new("Frame", Container)
+    frame.Size = UDim2.new(1, -5, 0, 35)
+    frame.BackgroundTransparency = 1
+    
+    local txt = Instance.new("TextBox", frame)
+    txt.Size = UDim2.new(1, 0, 1, 0)
+    txt.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    txt.PlaceholderText = text
+    txt.Text = ""
+    txt.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", txt)
+    txt.FocusLost:Connect(function()
+        Config[cfg_key] = tonumber(txt.Text) or Config[cfg_key]
+    end)
+end
+
+--// UI CONTENT //--
+AddToggle("Hitbox Expander", "Hitbox")
+AddInput("Hitbox Size (Max 1000)", "HitboxSize")
+AddToggle("Killaura (Auto Attack)", "Killaura")
+AddInput("Aura Range", "KillauraRange")
+AddToggle("ESP Highlight", "ESP")
+AddToggle("Speed Hack", "Speed")
+AddInput("Speed Value", "SpeedVal")
+AddToggle("Fly Mobile", "Fly")
+AddInput("Fly Speed", "FlySpeed")
+AddToggle("Infinite Jump", "InfJump")
+
+--// CORE LOGIC //--
+
+-- Anti-Fling & Hitbox Logic
 RunService.Stepped:Connect(function()
     if LocalPlayer.Character then
-        -- Vô hiệu hóa va chạm của chính mình và vũ khí
+        -- Vô hiệu hóa va chạm tool để không bị văng khi cầm vũ khí
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") and v.CanCollide then
-                v.CanCollide = false
-            end
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
     end
 
@@ -56,29 +127,57 @@ RunService.Stepped:Connect(function()
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 local hrp = p.Character.HumanoidRootPart
-                
-                -- Ép thông số hitbox
                 hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
                 hrp.Transparency = 0.8
-                hrp.CanCollide = false -- Tắt va chạm tuyệt đối
-                hrp.Massless = true    -- Không có trọng lượng
-                hrp.Velocity = Vector3.zero -- Triệt tiêu lực quán tính
-                hrp.RotVelocity = Vector3.zero
+                hrp.CanCollide = false
+                hrp.Massless = true
+                hrp.Velocity = Vector3.zero
             end
         end
     end
 end)
 
---// KILLAURA (TỐI ƯU TỐC ĐỘ) //--
+-- Fly & Speed & ESP Logic
+RunService.Heartbeat:Connect(function()
+    -- Speed
+    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
+    end
+
+    -- Fly
+    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
+        hrp.Velocity = Vector3.zero
+        if hum and hum.MoveDirection.Magnitude > 0 then
+            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
+        end
+    end
+
+    -- ESP
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if Config.ESP and not p.Character:FindFirstChild("QT_HL") then
+                local hl = Instance.new("Highlight", p.Character)
+                hl.Name = "QT_HL"
+                hl.FillColor = Color3.fromRGB(0, 255, 150)
+            elseif not Config.ESP and p.Character:FindFirstChild("QT_HL") then
+                p.Character.QT_HL:Destroy()
+            end
+        end
+    end
+end)
+
+-- Killaura Loop
 task.spawn(function()
-    while task.wait() do
+    while task.wait(0.1) do
         if Config.Killaura and LocalPlayer.Character then
             local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
             if tool then
                 for _, p in pairs(Players:GetPlayers()) do
                     if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                        if distance <= Config.KillauraRange then
+                        local dist = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                        if dist <= Config.KillauraRange then
                             tool:Activate()
                         end
                     end
@@ -88,47 +187,10 @@ task.spawn(function()
     end
 end)
 
---// UI COMPONENTS //--
-local function AddToggle(name, cfg_key)
-    local btn = Instance.new("TextButton", Main)
-    btn.Size = UDim2.new(0.9, 0, 0, 35)
-    btn.Position = UDim2.new(0.05, 0, 0, 50 + (40 * (#Main:GetChildren() - 2)))
-    btn.Text = name .. ": OFF"
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", btn)
-
-    btn.MouseButton1Click:Connect(function()
-        Config[cfg_key] = not Config[cfg_key]
-        btn.Text = name .. ": " .. (Config[cfg_key] and "ON" or "OFF")
-        btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(40, 40, 40)
-    end)
-end
-
-local function AddInput(name, cfg_key)
-    local box = Instance.new("TextBox", Main)
-    box.Size = UDim2.new(0.9, 0, 0, 35)
-    box.Position = UDim2.new(0.05, 0, 0, 50 + (40 * (#Main:GetChildren() - 2)))
-    box.PlaceholderText = name
-    box.Text = ""
-    box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    box.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", box)
-    box.FocusLost:Connect(function()
-        Config[cfg_key] = tonumber(box.Text) or Config[cfg_key]
-    end)
-end
-
-AddToggle("Hitbox Expander", "Hitbox")
-AddInput("Hitbox Size (Max 1000)", "HitboxSize")
-AddToggle("Killaura", "Killaura")
-AddInput("Killaura Range", "KillauraRange")
-AddToggle("Speed Hack", "Speed")
-
--- Speed Loop
-RunService.Heartbeat:Connect(function()
-    if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
+-- Inf Jump
+UserInputService.JumpRequest:Connect(function()
+    if Config.InfJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid:ChangeState(3)
     end
 end)
 
