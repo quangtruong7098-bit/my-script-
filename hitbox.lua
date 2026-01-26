@@ -17,12 +17,12 @@ local Config = {
     ESP = false
 }
 
---// UI //--
+--// UI GỌN NHẸ //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 350, 0, 420)
 Main.Position = UDim2.new(0.5, -175, 0.5, -210)
-Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Instance.new("UICorner", Main)
 local Stroke = Instance.new("UIStroke", Main)
 Stroke.Color = Color3.fromRGB(0, 255, 150)
@@ -35,7 +35,6 @@ Container.BackgroundTransparency = 1
 Container.ScrollBarThickness = 0
 Instance.new("UIListLayout", Container).Padding = UDim.new(0, 5)
 
--- Nút ẩn/hiện
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 45, 0, 45)
 ToggleBtn.Position = UDim2.new(0, 10, 0.5, 0)
@@ -57,15 +56,6 @@ local function AddToggle(text, cfg_key)
         Config[cfg_key] = not Config[cfg_key]
         btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
         btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(30, 30, 30)
-        
-        -- Xóa ESP ngay lập tức nếu tắt
-        if cfg_key == "ESP" and not Config.ESP then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p.Character and p.Character:FindFirstChild("QT_ESP") then
-                    p.Character.QT_ESP:Destroy()
-                end
-            end
-        end
     end)
 end
 
@@ -80,91 +70,94 @@ local function AddInput(text, cfg_key, def)
     box.FocusLost:Connect(function() Config[cfg_key] = tonumber(box.Text) or def end)
 end
 
---// CONTROLS //--
 AddToggle("Hiện Người Chơi (ESP)", "ESP")
-AddToggle("Hitbox (Ghost Mode)", "Hitbox")
+AddToggle("Mở Rộng Hitbox (Fix Đứng Im)", "Hitbox")
 AddInput("Size Hitbox", "HitboxSize", 25)
 AddToggle("Tự Đánh (Killaura)", "Killaura")
 AddInput("Tầm Chém", "KillauraRange", 25)
 AddToggle("Chạy Nhanh", "Speed")
 AddInput("Tốc Độ", "SpeedVal", 100)
-AddToggle("Xuyên Tường (Noclip)", "Noclip")
-AddToggle("Bay (Fly)", "Fly")
+AddToggle("Xuyên Tường", "Noclip")
 
---// LOGIC CHUẨN //--
+--// LOGIC V10 - FIX ĐỨNG IM //--
 
--- 1. Xử lý ESP (Chạy riêng để không lag)
+-- 1. Hitbox System (Chỉ thay đổi Head để không lỗi vật lý di chuyển)
 task.spawn(function()
     while task.wait(0.5) do
-        if Config.ESP then
+        if Config.Hitbox then
             for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character then
-                    if not p.Character:FindFirstChild("QT_ESP") then
-                        local hl = Instance.new("Highlight")
-                        hl.Name = "QT_ESP"
-                        hl.Parent = p.Character
-                        hl.FillColor = Color3.fromRGB(0, 255, 150)
-                        hl.OutlineColor = Color3.new(1, 1, 1)
-                    end
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local head = p.Character.Head
+                    head.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                    head.Transparency = 0.7
+                    head.BrickColor = BrickColor.new("Bright blue")
+                    head.CanCollide = false -- Tắt va chạm để không văng
+                    head.Massless = true
+                end
+            end
+        else
+            -- Reset về mặc định khi tắt
+            for _, p in pairs(Players:GetPlayers()) do
+                if p.Character and p.Character:FindFirstChild("Head") then
+                    p.Character.Head.Size = Vector3.new(2, 1, 1)
+                    p.Character.Head.Transparency = 0
                 end
             end
         end
     end
 end)
 
--- 2. Xử lý Hitbox & Noclip (Stepped tối ưu)
-RunService.Stepped:Connect(function()
-    if LocalPlayer.Character then
-        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                if Config.Noclip then
-                    v.CanCollide = false
-                elseif v.Parent:IsA("Tool") or v.Name == "Handle" then
-                    v.CanCollide = false -- Chống văng khi cầm tool
-                end
-            end
-        end
-    end
-
-    if Config.Hitbox then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local hrp = p.Character.HumanoidRootPart
-                hrp.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                hrp.Transparency = 0.8
-                hrp.CanCollide = false
-            end
-        end
-    end
-end)
-
--- 3. Killaura & Speed & Fly
+-- 2. ESP & Killaura & Speed (Heartbeat mượt mà)
 RunService.Heartbeat:Connect(function()
+    -- ESP
+    if Config.ESP then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and not p.Character:FindFirstChild("QT_ESP") then
+                local hl = Instance.new("Highlight", p.Character)
+                hl.Name = "QT_ESP"
+                hl.FillColor = Color3.fromRGB(0, 255, 150)
+            end
+        end
+    else
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character and p.Character:FindFirstChild("QT_ESP") then p.Character.QT_ESP:Destroy() end
+        end
+    end
+
     -- Speed
     if Config.Speed and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = Config.SpeedVal
     end
-    
-    -- Fly
-    if Config.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        hrp.Velocity = Vector3.zero
-        if LocalPlayer.Character.Humanoid.MoveDirection.Magnitude > 0 then
-            hrp.CFrame = hrp.CFrame + (Camera.CFrame.LookVector * (Config.FlySpeed / 20))
-        end
-    end
 
-    -- Killaura
+    -- Killaura (Đánh dựa trên Head đã phóng to)
     if Config.Killaura and LocalPlayer.Character then
         local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
         if tool then
             for _, p in pairs(Players:GetPlayers()) do
-                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                    if d <= Config.KillauraRange or d <= (Config.HitboxSize/2) then
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local d = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.Head.Position).Magnitude
+                    if d <= Config.KillauraRange or d <= (Config.HitboxSize/1.5) then
                         tool:Activate()
                     end
                 end
+            end
+        end
+    end
+end)
+
+-- 3. Noclip (Xử lý vật lý Stepped)
+RunService.Stepped:Connect(function()
+    if Config.Noclip and LocalPlayer.Character then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+    -- Chống văng khi cầm Tool
+    if LocalPlayer.Character then
+        local t = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if t then
+            for _, v in pairs(t:GetDescendants()) do
+                if v:IsA("BasePart") then v.CanCollide = false end
             end
         end
     end
