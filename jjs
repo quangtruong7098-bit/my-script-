@@ -5,7 +5,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local Config = {
     Hitbox = false,
-    HitboxSize = 15,
+    HitboxSize = 12, -- ĐỂ MỨC 10-15 LÀ CHUẨN NHẤT, ĐỪNG ĐỂ TO QUÁ
     Killaura = false,
     AutoBlock = false,
     AntiRagdoll = false,
@@ -13,140 +13,116 @@ local Config = {
     SpeedVal = 80
 }
 
---// UI GỌN NHẸ //--
+--// UI GỌN (V16) //--
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 350, 0, 450)
 Main.Position = UDim2.new(0.5, -175, 0.5, -225)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Main.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 Instance.new("UICorner", Main)
-local Stroke = Instance.new("UIStroke", Main)
-Stroke.Color = Color3.fromRGB(170, 0, 255)
-Stroke.Thickness = 2
 
 local Container = Instance.new("ScrollingFrame", Main)
 Container.Size = UDim2.new(1, -20, 1, -60)
 Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 0
 Instance.new("UIListLayout", Container).Padding = UDim.new(0, 5)
 
--- Nút QT 
 local ToggleBtn = Instance.new("TextButton", ScreenGui)
 ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
 ToggleBtn.Position = UDim2.new(0, 10, 0.4, 0)
-ToggleBtn.Text = "V15"
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ToggleBtn.TextColor3 = Color3.fromRGB(170, 0, 255)
+ToggleBtn.Text = "V16"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 ToggleBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
 
---// UI HELPERS //--
 local function AddToggle(text, cfg_key)
     local btn = Instance.new("TextButton", Container)
     btn.Size = UDim2.new(1, 0, 0, 35)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.Text = text .. ": OFF"
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.TextColor3 = Color3.new(1, 1, 1)
     Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(function()
         Config[cfg_key] = not Config[cfg_key]
         btn.Text = text .. ": " .. (Config[cfg_key] and "ON" or "OFF")
-        btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(170, 0, 255) or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = Config[cfg_key] and Color3.fromRGB(200, 0, 0) or Color3.fromRGB(40, 40, 40)
     end)
 end
 
-AddToggle("Hitbox Ảo (Sửa lỗi)", "Hitbox")
-AddToggle("Tự Đỡ Đòn (Hold F)", "AutoBlock")
-AddToggle("Tự Đánh (Killaura)", "Killaura")
+AddToggle("Hitbox Toàn Thân (Dễ Trúng)", "Hitbox")
+AddToggle("Tự Đỡ Đòn (Block)", "AutoBlock")
+AddToggle("Tự Đấm (Killaura)", "Killaura")
 AddToggle("Chống Té (Anti-Ragdoll)", "AntiRagdoll")
 AddToggle("Chạy Nhanh", "Speed")
 
---// LOGIC V15 - CHUẨN JJS //--
+--// LOGIC V16 - FIX SÁT THƯƠNG //--
 
--- 1. Sửa lỗi Hitbox (Tạo Part mới thay vì chỉnh Head)
 RunService.Stepped:Connect(function()
     if Config.Hitbox then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character then
-                local root = p.Character:FindFirstChild("HumanoidRootPart")
-                if root then
-                    -- Thay đổi trực tiếp Root để mọi đòn đánh đều trúng tâm
-                    root.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
-                    root.Transparency = 0.8 -- Hiện khối mờ mờ để bạn biết địch ở đâu
-                    root.Color = Color3.fromRGB(170, 0, 255)
-                    root.CanCollide = false
+                -- Phóng to toàn bộ bộ phận thay vì chỉ mỗi Root hay Head
+                for _, v in pairs(p.Character:GetChildren()) do
+                    if v:IsA("BasePart") and (v.Name:find("Torso") or v.Name == "Head" or v.Name:find("Arm") or v.Name:find("Leg")) then
+                        v.Size = Vector3.new(Config.HitboxSize, Config.HitboxSize, Config.HitboxSize)
+                        v.Transparency = 0.8
+                        v.CanCollide = false
+                        v.CanTouch = true -- QUAN TRỌNG: Phải để cái này true mới trúng sát thương
+                    end
                 end
-            end
-        end
-    else
-        -- Reset khi tắt
-        for _, p in pairs(Players:GetPlayers()) do
-            if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                p.Character.HumanoidRootPart.Size = Vector3.new(2, 2, 1)
-                p.Character.HumanoidRootPart.Transparency = 1
             end
         end
     end
 end)
 
--- 2. Sửa Auto Block (Sử dụng Loop ép phím F)
-local blocking = false
+-- Auto Block (Dùng Key F)
+local isB = false
 task.spawn(function()
     while task.wait(0.1) do
         if Config.AutoBlock and LocalPlayer.Character then
-            local enemyNear = false
+            local enemy = false
             for _, p in pairs(Players:GetPlayers()) do
                 if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < 18 then enemyNear = true break end
+                    if (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude < 15 then
+                        enemy = true break
+                    end
                 end
             end
-            
-            if enemyNear and not blocking then
+            if enemy and not isB then
                 VIM:SendKeyEvent(true, Enum.KeyCode.F, false, game)
-                blocking = true
-            elseif not enemyNear and blocking then
+                isB = true
+            elseif not enemy and isB then
                 VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-                blocking = false
+                isB = false
             end
-        elseif not Config.AutoBlock and blocking then
-            VIM:SendKeyEvent(false, Enum.KeyCode.F, false, game)
-            blocking = false
         end
     end
 end)
 
--- 3. Killaura & Speed & Anti-Ragdoll
+-- Killaura & Speed & Anti-Ragdoll
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("Humanoid") then return end
-    
-    -- Anti Ragdoll
+
     if Config.AntiRagdoll then
-        if char.Humanoid:GetState() == Enum.HumanoidStateType.Ragdoll or char.Humanoid.PlatformStand then
-            char.Humanoid.PlatformStand = false
+        char.Humanoid.PlatformStand = false
+        if char.Humanoid:GetState() == Enum.HumanoidStateType.Ragdoll then
             char.Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
         end
     end
 
-    -- Speed
-    if Config.Speed then
-        char.Humanoid.WalkSpeed = Config.SpeedVal
-    end
+    if Config.Speed then char.Humanoid.WalkSpeed = Config.SpeedVal end
 
-    -- Killaura (Click liên tục)
     if Config.Killaura then
         for _, p in pairs(Players:GetPlayers()) do
             if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
                 local d = (char.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                if d < 20 then
+                if d < 18 then -- Tầm đánh hợp lý để server không hủy damage
                     VIM:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-                    task.wait(0.01)
+                    task.wait(0.02)
                     VIM:SendMouseButtonEvent(0, 0, 0, false, game, 0)
                 end
             end
         end
     end
 end)
-
